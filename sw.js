@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v8';
+const CACHE_NAME = 'hope-toledo-bible-cache-v9';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -6,7 +6,8 @@ const ASSETS_TO_CACHE = [
   'firebase-config.js',
   'manifest.json',
   'topographic.svg',
-  'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@300;400;500;600;700;800&display=swap',
+  'assets/brand/_-10.svg',
+  'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Montserrat:ital,wght@0,400..900;1,400..900&family=Yellowtail&display=swap',
   'https://unpkg.com/@phosphor-icons/web@2.0.3'
 ];
 
