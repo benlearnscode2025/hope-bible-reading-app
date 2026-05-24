@@ -127,7 +127,7 @@ if (isMock) {
       signOut: () => signOut(auth),
       signInWithGoogle: () => {
         const provider = new GoogleAuthProvider();
-        return signInWithRedirect(auth, provider);
+        return signInWithPopup(auth, provider);
       },
       onAuthChange: (callback) => onAuthStateChanged(auth, callback),
       saveProgress: (uid, data) => setDoc(doc(db, "users", uid), data),
