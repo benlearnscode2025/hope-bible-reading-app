@@ -1,12 +1,13 @@
 // Firebase configuration. 
 // Replace with your real Firebase Project credentials to activate live database cloud sync.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAVFosnX_OisW-Deecar8IyB1Ck1kiRTAg",
+  authDomain: "hope-toledo-bible-tracker.firebaseapp.com",
+  projectId: "hope-toledo-bible-tracker",
+  storageBucket: "hope-toledo-bible-tracker.firebasestorage.app",
+  messagingSenderId: "20855341120",
+  appId: "1:20855341120:web:5dad92b25503dabf94dfa5",
+  measurementId: "G-E0EB841BPK"
 };
 
 // Check if credentials are set (not starting with "YOUR_" and not blank)
