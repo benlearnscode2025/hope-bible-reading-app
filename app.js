@@ -208,6 +208,7 @@ const PLAYBACK_SPEEDS = [1.0, 1.25, 1.5, 2.0];
 let isSeeking = false;
 let activeSpeakerFilter = "All";
 let sermonSearchQuery = "";
+let currentScreen = 'reader';
 
 
 // Local storage key name
@@ -245,6 +246,7 @@ function saveState() {
 const SCREENS = ['onboarding', 'reader', 'quiz', 'sermons', 'stats', 'settings'];
 
 function navigateTo(screenId) {
+  currentScreen = screenId;
   // Save state on screen change
   saveState();
 
@@ -1378,6 +1380,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load State
   loadState();
   loadSermonNotes();
+
+  // Scroll tracking for distraction-free reader mode
+  let lastScrollTop = window.scrollY || document.documentElement.scrollTop;
+  window.addEventListener('scroll', () => {
+    if (currentScreen !== 'reader') return;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop > lastScrollTop && scrollTop > 80) {
+      document.body.classList.add('distraction-free');
+    } else if (scrollTop < lastScrollTop - 12) {
+      document.body.classList.remove('distraction-free');
+    }
+    lastScrollTop = scrollTop;
+  }, { passive: true });
+
+  // Background tap toggling for distraction-free reader mode
+  const readerScreen = document.getElementById('screen-reader');
+  if (readerScreen) {
+    readerScreen.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('.reader-customizer') || e.target.closest('a')) {
+        return;
+      }
+      const selection = window.getSelection().toString();
+      if (selection.length > 0) return;
+      document.body.classList.toggle('distraction-free');
+    });
+  }
 
   // Handle dark mode setup from saved state
   if (state.theme === 'dark') {
