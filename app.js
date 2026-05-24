@@ -196,7 +196,7 @@ let state = {
   notificationTime: "08:00",
   onboarded: false,
   theme: 'light',
-  isPhysicalMode: localStorage.getItem('hope_physical_mode') === 'true'
+  isPhysicalMode: false
 };
 
 // Sermon State Variables
@@ -444,7 +444,10 @@ async function loadActiveChapter() {
       </div>
     `;
     
-    document.getElementById('retry-load-btn').addEventListener('click', loadActiveChapter);
+    const retryBtn = document.getElementById('retry-load-btn');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', loadActiveChapter);
+    }
   }
 }
 
@@ -814,7 +817,10 @@ function handleAuthChange(user) {
     // User is signed in
     if (syncTitle) syncTitle.textContent = "Cloud Sync Profile";
     if (syncStatus) syncStatus.textContent = `Signed in as: ${user.email}`;
-    if (authTriggerBtn) authTriggerBtn.querySelector('span').textContent = "Sign Out";
+    if (authTriggerBtn) {
+      const span = authTriggerBtn.querySelector('span');
+      if (span) span.textContent = "Sign Out";
+    }
     
     // Perform cloud sync merge
     syncProgressWithCloud();
@@ -822,7 +828,10 @@ function handleAuthChange(user) {
     // User is signed out
     if (syncTitle) syncTitle.textContent = "Cloud Sync";
     if (syncStatus) syncStatus.textContent = "Sign in to save and sync progress across devices.";
-    if (authTriggerBtn) authTriggerBtn.querySelector('span').textContent = "Sign In";
+    if (authTriggerBtn) {
+      const span = authTriggerBtn.querySelector('span');
+      if (span) span.textContent = "Sign In";
+    }
   }
 }
 
@@ -1628,7 +1637,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirm("Are you absolutely sure you want to delete all reading progress and streaks? This cannot be undone.")) {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('hope_sermon_notes');
-      localStorage.removeItem('hope_physical_mode');
       sermonNotes = {};
       state = {
         translation: 'kjv',
