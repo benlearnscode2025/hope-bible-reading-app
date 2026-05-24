@@ -580,6 +580,7 @@ body.has-player .app-main {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom Scrollbar for reader */
@@ -942,6 +943,7 @@ body.has-player .app-main {
   padding-bottom: 8px;
   margin-right: 4px;
   margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom scrollbar for books list */
@@ -1244,6 +1246,48 @@ input:checked + .slider:before {
   }
 }
 
+@media (max-width: 480px) {
+  .app-container {
+    padding: 12px 12px 12px 12px;
+  }
+
+  .double-bezel {
+    padding: 4px;
+  }
+
+  .double-bezel .inner-core {
+    padding: 18px 12px;
+  }
+
+  .header-logo-divider,
+  .logo-app {
+    display: none !important;
+  }
+
+  .header-logo-brand {
+    height: 38px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bento-card.streak-card,
+  .bento-card.completion-card,
+  .bento-card.books-card {
+    grid-column: span 1 !important;
+  }
+
+  .books-grid {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+  }
+
+  .player-btn.mini-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
+
 /* ==========================================================================
    SERMON SCREEN & AUDIO PLAYER STYLES
    ========================================================================== */
@@ -1309,6 +1353,7 @@ input:checked + .slider:before {
   overflow-x: auto;
   padding: 4px 4px 8px 4px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .filter-chips::-webkit-scrollbar {
@@ -1322,6 +1367,7 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 12px;
   padding: 6px 6px 6px 4px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sermon-list::-webkit-scrollbar {
@@ -1349,11 +1395,13 @@ input:checked + .slider:before {
   gap: 8px;
 }
 
-.sermon-card:hover {
-  border-color: var(--color-accent);
-  background: var(--bg-card);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-diffused);
+@media (hover: hover) {
+  .sermon-card:hover {
+    border-color: var(--color-accent);
+    background: var(--bg-card);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-diffused);
+  }
 }
 
 .sermon-card-meta {
@@ -1413,28 +1461,48 @@ input:checked + .slider:before {
               box-shadow 0.2s ease;
 }
 
-.sermon-card:hover .sermon-card-play-btn {
-  opacity: 1;
-  right: 16px;
-  transform: translateY(-50%) scale(1);
-  pointer-events: auto;
-}
+@media (hover: hover) {
+  .sermon-card:hover .sermon-card-play-btn {
+    opacity: 1;
+    right: 16px;
+    transform: translateY(-50%) scale(1);
+    pointer-events: auto;
+  }
 
-.sermon-card:hover .sermon-card-play-btn:hover {
-  transform: translateY(-50%) scale(1.1);
-  background: var(--color-accent);
-  filter: brightness(0.9);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  .sermon-card:hover .sermon-card-play-btn:hover {
+    transform: translateY(-50%) scale(1.1);
+    background: var(--color-accent);
+    filter: brightness(0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 }
 
 /* Adjust card footer layout when button is visible or hidden */
 @media (max-width: 600px) {
+  .sermon-card {
+    padding-right: 60px;
+  }
   .sermon-card-play-btn {
-    position: static;
-    transform: none;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%) scale(1);
     opacity: 1;
     pointer-events: auto;
-    margin-left: auto;
+  }
+}
+
+@media (hover: none) {
+  .sermon-card {
+    padding-right: 60px;
+  }
+  .sermon-card-play-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
@@ -1545,6 +1613,8 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 20px;
   max-height: 85dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .expanded-header {
@@ -1745,6 +1815,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .guide-scroll-container::-webkit-scrollbar {
