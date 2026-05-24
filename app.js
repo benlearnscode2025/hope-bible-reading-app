@@ -249,6 +249,12 @@ const SCREENS = ['onboarding', 'reader', 'quiz', 'sermons', 'stats', 'settings']
 function navigateTo(screenId) {
   currentScreen = screenId;
   document.body.classList.remove('distraction-free');
+  document.body.classList.remove('reader-expanded');
+  const scriptureCard = document.querySelector('.scripture-card');
+  if (scriptureCard) {
+    scriptureCard.classList.remove('expanded');
+    scriptureCard.classList.remove('collapsing');
+  }
   // Save state on screen change
   saveState();
 
@@ -402,7 +408,8 @@ async function loadActiveChapter() {
     }
 
     // Render Scripture Text
-    let htmlContent = `<div class="bible-text ${state.fontFamily === 'sans' ? 'sans-serif' : ''}" style="font-size: ${state.fontSize}%">`;
+    let htmlContent = `<div class="expanded-reference-header">${bookName} ${chapter}</div>`;
+    htmlContent += `<div class="bible-text ${state.fontFamily === 'sans' ? 'sans-serif' : ''}" style="font-size: ${state.fontSize}%">`;
     
     if (data.verses && data.verses.length > 0) {
       data.verses.forEach(v => {
@@ -1443,16 +1450,32 @@ document.addEventListener('DOMContentLoaded', () => {
     lastScrollTop = scrollTop;
   }, { passive: true });
 
-  // Background tap toggling for distraction-free reader mode
-  const readerScreen = document.getElementById('screen-reader');
-  if (readerScreen) {
-    readerScreen.addEventListener('click', (e) => {
-      if (e.target.closest('button') || e.target.closest('.reader-customizer') || e.target.closest('a')) {
+  // Immersive reader card expansion toggle
+  const scriptureCard = document.querySelector('.scripture-card');
+  if (scriptureCard) {
+    scriptureCard.addEventListener('click', (e) => {
+      // Ignore click on links, buttons, related sermons, or customizer elements
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.reader-customizer') || e.target.closest('.related-sermon-card')) {
         return;
       }
+      // Ignore click if user is selecting text
       const selection = window.getSelection().toString();
       if (selection.length > 0) return;
-      document.body.classList.toggle('distraction-free');
+
+      const isExpanded = scriptureCard.classList.contains('expanded');
+      if (isExpanded) {
+        // Collapse card
+        scriptureCard.classList.remove('expanded');
+        scriptureCard.classList.add('collapsing');
+        document.body.classList.remove('reader-expanded', 'distraction-free');
+        setTimeout(() => {
+          scriptureCard.classList.remove('collapsing');
+        }, 300);
+      } else {
+        // Expand card
+        scriptureCard.classList.add('expanded');
+        document.body.classList.add('reader-expanded', 'distraction-free');
+      }
     });
   }
 
