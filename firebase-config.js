@@ -112,7 +112,7 @@ if (isMock) {
   ]).then(([firebaseAppModule, firebaseAuthModule, firebaseFirestoreModule]) => {
     
     const { initializeApp } = firebaseAppModule;
-    const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } = firebaseAuthModule;
+    const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect } = firebaseAuthModule;
     const { getFirestore, doc, getDoc, setDoc } = firebaseFirestoreModule;
     
     // Initialize Firebase
@@ -127,7 +127,13 @@ if (isMock) {
       signOut: () => signOut(auth),
       signInWithGoogle: () => {
         const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider);
+        return signInWithPopup(auth, provider).catch(error => {
+          if (error.code === 'auth/popup-blocked') {
+            console.log("Popup blocked. Falling back to signInWithRedirect...");
+            return signInWithRedirect(auth, provider);
+          }
+          throw error;
+        });
       },
       onAuthChange: (callback) => onAuthStateChanged(auth, callback),
       saveProgress: (uid, data) => setDoc(doc(db, "users", uid), data),
