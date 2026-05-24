@@ -974,7 +974,10 @@ async function loadSermonsLibrary() {
       renderSpeakerFilters();
     } catch (e) {
       console.error("Error loading sermons library", e);
-      listContainer.innerHTML = `<p class="error-message">Failed to load sermons. Please check your connection.</p>`;
+      listContainer.innerHTML = `
+        <p class="error-message">Failed to load sermons. Please check your connection.</p>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; text-align: center; font-family: monospace;">Details: ${e.message || e}</p>
+      `;
       return;
     }
   }
