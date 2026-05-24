@@ -903,6 +903,7 @@ function playSermon(sermonObj) {
   
   const playerContainer = document.getElementById('persistent-player');
   playerContainer.classList.remove('hidden');
+  document.body.classList.add('has-player');
   
   document.getElementById('mini-player-title').textContent = sermonObj.title;
   document.getElementById('mini-player-speaker').textContent = sermonObj.speaker || "Hope Baptist Church";
@@ -1085,6 +1086,7 @@ function stopAndClosePlayer() {
   }
   playingSermon = null;
   document.getElementById('persistent-player').classList.add('hidden');
+  document.body.classList.remove('has-player');
 }
 
 function saveCurrentSermonNotes() {
