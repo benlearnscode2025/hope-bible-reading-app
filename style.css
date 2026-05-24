@@ -204,18 +204,36 @@ body.has-player .app-main {
   gap: 12px;
 }
 
+.logo-floating-island {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--color-border);
+  padding: 6px 14px;
+  border-radius: var(--radius-inner);
+  box-shadow: var(--shadow-diffused);
+  transition: var(--transition-spring);
+  cursor: pointer;
+}
+
+.logo-floating-island:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-diffused), 0 8px 24px rgba(51, 43, 41, 0.04);
+}
+
 .header-logo-brand {
-  width: 125px;
-  height: 30px;
+  width: 105px;
+  height: 24px;
   background-color: var(--color-accent);
   mask-image: url('assets/brand/_-10.svg');
   mask-size: contain;
   mask-repeat: no-repeat;
-  mask-position: center left;
+  mask-position: center;
   -webkit-mask-image: url('assets/brand/_-10.svg');
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center left;
+  -webkit-mask-position: center;
   transition: var(--transition-fast);
 }
 
