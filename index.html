@@ -19,7 +19,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Montserrat:ital,wght@0,400..900;1,400..900&family=Yellowtail&display=swap" rel="stylesheet">
   
   <!-- CSS Styling -->
   <link rel="stylesheet" href="style.css">
@@ -39,13 +39,9 @@
     <!-- Top Branding Header -->
     <header class="app-header">
       <div class="header-logo">
-        <span class="logo-circle">
-          <img src="icon-192.png" alt="Hope Logo" class="header-logo-img">
-        </span>
-        <div class="logo-text">
-          <span class="logo-church">Hope Baptist Church</span>
-          <span class="logo-app">Chapter by Chapter</span>
-        </div>
+        <div class="header-logo-brand" aria-label="Hope Baptist Church"></div>
+        <div class="header-logo-divider"></div>
+        <span class="logo-app">Chapter by Chapter</span>
       </div>
       <div class="header-actions">
         <button id="toggle-theme-btn" class="icon-btn" title="Toggle theme">
@@ -60,6 +56,7 @@
       <section id="screen-onboarding" class="screen active">
         <div class="onboarding-card double-bezel">
           <div class="inner-core">
+            <span class="special-title">Hope Toledo</span>
             <h1 class="screen-title">Welcome to your daily scripture journey.</h1>
             <p class="subtitle">Glorifying Jesus Christ by Multiplying Disciples.</p>
             
@@ -144,7 +141,7 @@
         <div class="quiz-card double-bezel">
           <div class="inner-core">
             <div class="quiz-header">
-              <span class="quiz-progress-text">Daily Reflection</span>
+              <span class="special-badge">Daily Reflection</span>
               <h2 id="quiz-chapter-title" class="quiz-title">Genesis 1 Reflection</h2>
             </div>
             
@@ -180,6 +177,7 @@
       <section id="screen-sermons" class="screen">
         <div class="sermons-container-card double-bezel">
           <div class="inner-core">
+            <span class="special-title">Listen to</span>
             <h2 class="screen-title">Sermons</h2>
             <p class="subtitle">Search and listen to recent messages from Hope Baptist Church.</p>
             
@@ -257,6 +255,7 @@
       <section id="screen-settings" class="screen">
         <div class="settings-card double-bezel">
           <div class="inner-core">
+            <span class="special-title">Settings</span>
             <h2 class="screen-title">Preferences</h2>
             
             <div class="settings-list">
