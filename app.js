@@ -1776,11 +1776,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (googleSigninBtn) {
     googleSigninBtn.addEventListener('click', async () => {
       const originalText = googleSigninBtn.querySelector('span').textContent;
-      googleSigninBtn.disabled = true;
-      googleSigninBtn.querySelector('span').textContent = "Signing In...";
       
       try {
-        await window.HopeFirebase.signInWithGoogle();
+        // Start the Google sign-in synchronously first to preserve the user gesture
+        const signInPromise = window.HopeFirebase.signInWithGoogle();
+        
+        // Update UI/disable button while waiting for the authentication promise
+        googleSigninBtn.disabled = true;
+        googleSigninBtn.querySelector('span').textContent = "Signing In...";
+        
+        await signInPromise;
         showToast("Signed in with Google successfully!", "check-circle");
         if (authModal) authModal.classList.add('hidden');
       } catch (err) {
