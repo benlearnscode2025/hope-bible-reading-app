@@ -1771,3 +1771,7 @@ input:checked + .slider:before {
   color: var(--text-secondary);
 }
 
+/* Global Utility Classes */
+.hidden {
+  display: none !important;
+}

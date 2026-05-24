@@ -1043,7 +1043,7 @@ function updatePlaybackUI() {
   }
   
   if (playerPlayPauseBtn) {
-    playerPlayPauseBtn.innerHTML = isPlaying ? '<i class="ph ph-pause-fill"></i>' : '<i class="ph ph-play-fill"></i>';
+    playerPlayPauseBtn.innerHTML = isPlaying ? '<i class="ph-fill ph-pause"></i>' : '<i class="ph-fill ph-play"></i>';
   }
 }
 
@@ -1455,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const saveNotesBtn = document.getElementById('save-notes-btn');
+  const saveNotesBtn = document.getElementById('player-save-notes-btn');
   if (saveNotesBtn) {
     saveNotesBtn.addEventListener('click', () => {
       saveCurrentSermonNotes();
