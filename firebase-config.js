@@ -127,13 +127,7 @@ if (isMock) {
       signOut: () => signOut(auth),
       signInWithGoogle: () => {
         const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider).catch(error => {
-          if (error.code === 'auth/popup-blocked') {
-            console.log("Popup blocked. Falling back to signInWithRedirect...");
-            return signInWithRedirect(auth, provider);
-          }
-          throw error;
-        });
+        return signInWithRedirect(auth, provider);
       },
       onAuthChange: (callback) => onAuthStateChanged(auth, callback),
       saveProgress: (uid, data) => setDoc(doc(db, "users", uid), data),
