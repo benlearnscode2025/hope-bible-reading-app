@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hope Toledo - Chapter by Chapter Bible Tracker</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A calm, distraction-free Bible reading companion for Hope Baptist Church. Read chapter by chapter, take daily quizzes, and grow in your faith.">
+  <meta name="theme-color" content="#FAF7F2">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Styling -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Phosphor Icons (Ultra-light variant via CDN) -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+</head>
+<body>
+
+  <!-- Background Ambient Mesh Gradients (Soft-Skill Vibe Archetype) -->
+  <div class="ambient-mesh"></div>
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
+
+  <div id="app-container" class="app-container">
+    
+    <!-- Top Branding Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <span class="logo-circle">
+          <i class="ph ph-crosshair"></i>
+        </span>
+        <div class="logo-text">
+          <span class="logo-church">Hope Baptist Church</span>
+          <span class="logo-app">Chapter by Chapter</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="toggle-theme-btn" class="icon-btn" title="Toggle theme">
+          <i class="ph ph-moon"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      
+      <!-- SCREEN 1: ONBOARDING -->
+      <section id="screen-onboarding" class="screen active">
+        <div class="onboarding-card double-bezel">
+          <div class="inner-core">
+            <h1 class="screen-title">Welcome to your daily scripture journey.</h1>
+            <p class="subtitle">Glorifying Jesus Christ by Multiplying Disciples.</p>
+            
+            <div class="feature-highlights">
+              <div class="highlight-item">
+                <div class="highlight-icon"><i class="ph ph-book-open"></i></div>
+                <div class="highlight-desc">
+                  <h3>One Chapter Daily</h3>
+                  <p>Read through God's Word at a steady, thoughtful pace without rushing.</p>
+                </div>
+              </div>
+              <div class="highlight-item">
+                <div class="highlight-icon"><i class="ph ph-brain"></i></div>
+                <div class="highlight-desc">
+                  <h3>Reflective Quizzes</h3>
+                  <p>Check your understanding and reflect on the application of each chapter.</p>
+                </div>
+              </div>
+              <div class="highlight-item">
+                <div class="highlight-icon"><i class="ph ph-calendar-blank"></i></div>
+                <div class="highlight-desc">
+                  <h3>Visual Milestones</h3>
+                  <p>Keep track of your reading streak and watch your progress grow day by day.</p>
+                </div>
+              </div>
+            </div>
+
+
+
+            <button id="start-journey-btn" class="btn-primary island-btn">
+              <span>Begin Journey</span>
+              <div class="btn-icon"><i class="ph ph-arrow-right"></i></div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: BIBLE READER -->
+      <section id="screen-reader" class="screen">
+        <div class="reader-meta-bar">
+          <div class="current-chapter-info">
+            <span id="reader-book-title" class="reader-book-title">Genesis</span>
+            <span id="reader-chapter-num" class="reader-chapter-num">Chapter 1</span>
+          </div>
+          <div class="reader-customizer">
+            <button id="btn-zoom-out" class="icon-btn small" title="Decrease font size">
+              <i class="ph ph-text-t"></i><span class="small-indicator">-</span>
+            </button>
+            <button id="btn-zoom-in" class="icon-btn small" title="Increase font size">
+              <i class="ph ph-text-t"></i><span class="small-indicator">+</span>
+            </button>
+            <button id="btn-font-family" class="icon-btn small" title="Toggle Serif / Sans">
+              <i class="ph ph-text-aa"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Double Bezel Scripture Container -->
+        <div class="scripture-card double-bezel">
+          <div class="inner-core" id="scripture-container">
+            <!-- Loaded dynamically -->
+            <div class="skeleton-loader">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reader-actions">
+          <button id="complete-chapter-btn" class="btn-primary island-btn disabled">
+            <span>Complete & Take Quiz</span>
+            <div class="btn-icon"><i class="ph ph-check"></i></div>
+          </button>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: REFLECTION QUIZ -->
+      <section id="screen-quiz" class="screen">
+        <div class="quiz-card double-bezel">
+          <div class="inner-core">
+            <div class="quiz-header">
+              <span class="quiz-progress-text">Daily Reflection</span>
+              <h2 id="quiz-chapter-title" class="quiz-title">Genesis 1 Reflection</h2>
+            </div>
+            
+            <div id="quiz-question-container" class="quiz-question-container">
+              <!-- Loaded dynamically -->
+            </div>
+
+            <div id="quiz-explanation" class="quiz-explanation hidden">
+              <div class="explanation-box">
+                <i class="ph ph-info explanation-icon"></i>
+                <div class="explanation-text">
+                  <h4>Scripture Note</h4>
+                  <p id="explanation-content"></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="quiz-actions">
+              <button id="next-quiz-btn" class="btn-primary island-btn hidden">
+                <span>Next Question</span>
+                <div class="btn-icon"><i class="ph ph-arrow-right"></i></div>
+              </button>
+              <button id="finish-quiz-btn" class="btn-primary island-btn hidden">
+                <span>Complete Reflection</span>
+                <div class="btn-icon"><i class="ph ph-sparkle"></i></div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN: SERMONS -->
+      <section id="screen-sermons" class="screen">
+        <div class="sermons-container-card double-bezel">
+          <div class="inner-core">
+            <h2 class="screen-title">Sermons</h2>
+            <p class="subtitle">Search and listen to recent messages from Hope Baptist Church.</p>
+            
+            <div class="sermon-search-container">
+              <div class="search-input-wrapper">
+                <i class="ph ph-magnifying-glass search-icon"></i>
+                <input type="text" id="sermon-search-input" placeholder="Search by title, scripture, or topic...">
+              </div>
+            </div>
+            
+            <div class="speaker-filter-container">
+              <div class="filter-chips" id="sermon-speaker-chips">
+                <!-- Injected dynamically -->
+              </div>
+            </div>
+            
+            <div id="sermon-list" class="sermon-list">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: PROGRESS & STREAKS -->
+      <section id="screen-stats" class="screen">
+        <div class="stats-grid">
+          
+          <!-- Bento Card 1: Streak (col-span-1) -->
+          <div class="bento-card double-bezel streak-card">
+            <div class="inner-core">
+              <span class="bento-label">Current Streak</span>
+              <div class="streak-value">
+                <span id="streak-number">0</span>
+                <span class="streak-unit">days</span>
+              </div>
+              <p class="streak-subtitle"><i class="ph ph-fire-simple"></i> Keep the flame burning!</p>
+            </div>
+          </div>
+
+          <!-- Bento Card 2: Progress summary (col-span-1) -->
+          <div class="bento-card double-bezel completion-card">
+            <div class="inner-core">
+              <span class="bento-label">Bible Completed</span>
+              <div class="progress-radial-wrapper">
+                <svg class="progress-radial" viewBox="0 0 36 36">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path id="progress-radial-fill" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="progress-text-overlay">
+                  <span id="progress-percentage">0%</span>
+                </div>
+              </div>
+              <p class="progress-subtitle"><span id="chapters-read-count">0</span> / 1189 chapters</p>
+            </div>
+          </div>
+
+          <!-- Bento Card 3: Milestone Grid (col-span-2) -->
+          <div class="bento-card double-bezel books-card">
+            <div class="inner-core">
+              <span class="bento-label">Books of the Bible</span>
+              <div class="books-selector">
+                <button id="btn-filter-ot" class="filter-chip active">Old Testament</button>
+                <button id="btn-filter-nt" class="filter-chip">New Testament</button>
+              </div>
+              <div id="books-grid" class="books-grid">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- SCREEN 5: SETTINGS -->
+      <section id="screen-settings" class="screen">
+        <div class="settings-card double-bezel">
+          <div class="inner-core">
+            <h2 class="screen-title">Preferences</h2>
+            
+            <div class="settings-list">
+
+
+              <div class="settings-item">
+                <div class="settings-item-desc">
+                  <h3>Daily Reminders</h3>
+                  <p>Enable browser notifications to stay consistent.</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="toggle-notifications">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="settings-item" id="reminder-time-group" class="hidden">
+                <div class="settings-item-desc">
+                  <h3>Reminder Time</h3>
+                  <p>Select when you'd like to read.</p>
+                </div>
+                <input type="time" id="reminder-time" class="custom-time" value="08:00">
+              </div>
+
+              <div class="settings-item danger-zone">
+                <div class="settings-item-desc">
+                  <h3>Reset Progress</h3>
+                  <p>Permanently erase all reading data and streak history.</p>
+                </div>
+                <button id="reset-progress-btn" class="btn-danger">
+                  <span>Reset All Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating Navigation Bar (Soft-Skill Navigation Archetype: Floating Island) -->
+    <nav id="floating-nav" class="floating-nav hidden">
+      <button class="nav-tab active" data-screen="reader" title="Read Scripture">
+        <i class="ph ph-book-bookmark"></i>
+        <span>Read</span>
+      </button>
+      <button class="nav-tab" data-screen="sermons" title="Listen to Sermons">
+        <i class="ph ph-microphone"></i>
+        <span>Sermons</span>
+      </button>
+      <button class="nav-tab" data-screen="stats" title="Streaks & Progress">
+        <i class="ph ph-chart-bar"></i>
+        <span>Stats</span>
+      </button>
+      <button class="nav-tab" data-screen="settings" title="Settings">
+        <i class="ph ph-gear-six"></i>
+        <span>Settings</span>
+      </button>
+    </nav>
+    
+  </div>
+
+  <!-- Persistent Floating Audio Player -->
+  <div id="persistent-player" class="persistent-player hidden">
+    <!-- Mini Player State -->
+    <div class="mini-player" id="mini-player">
+      <div class="mini-player-info">
+        <span class="mini-title" id="mini-player-title">Sermon Title</span>
+        <span class="mini-speaker" id="mini-player-speaker">Speaker Name</span>
+      </div>
+      <div class="mini-player-controls">
+        <button id="mini-play-pause-btn" class="player-btn mini-btn" title="Play/Pause">
+          <i class="ph ph-play"></i>
+        </button>
+        <button id="mini-maximize-btn" class="player-btn mini-btn" title="Expand Player">
+          <i class="ph ph-caret-up"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Expanded Player State (Double Bezel) -->
+    <div class="expanded-player hidden" id="expanded-player">
+      <div class="expanded-player-card double-bezel">
+        <div class="inner-core">
+          <!-- Expanded Player Header -->
+          <div class="expanded-header">
+            <button id="player-minimize-btn" class="icon-btn small" title="Minimize to bar">
+              <i class="ph ph-caret-down"></i>
+            </button>
+            <span class="player-header-title">Now Playing</span>
+            <button id="player-close-btn" class="icon-btn small" title="Stop & Close Player">
+              <i class="ph ph-x"></i>
+            </button>
+          </div>
+
+          <!-- Sermon Info -->
+          <div class="player-sermon-info">
+            <h3 id="player-title">Sermon Title</h3>
+            <div class="player-meta">
+              <span id="player-speaker">Speaker Name</span>
+              <span id="player-scripture">Scripture Ref</span>
+            </div>
+          </div>
+
+          <!-- Player Tabs Navigation -->
+          <div class="player-tabs">
+            <button class="player-tab-btn active" data-tab="playback">Playback</button>
+            <button class="player-tab-btn" data-tab="guide">Study Guide</button>
+            <button class="player-tab-btn" data-tab="notes">Notes</button>
+          </div>
+
+          <!-- Player Tab Content -->
+          <div class="player-tab-content">
+            <!-- TAB 1: PLAYBACK -->
+            <div class="player-tab-panel active" id="panel-playback">
+              <!-- Timeline Seeking -->
+              <div class="timeline-container">
+                <input type="range" id="player-seekbar" class="player-seekbar" min="0" max="100" value="0">
+                <div class="time-display">
+                  <span id="player-current-time">0:00</span>
+                  <span id="player-duration">0:00</span>
+                </div>
+              </div>
+
+              <!-- Main Control Bar -->
+              <div class="player-controls">
+                <button id="player-speed-btn" class="player-speed-btn" title="Playback Speed">1.0x</button>
+                <button id="player-play-pause-btn" class="player-play-btn" title="Play/Pause">
+                  <i class="ph ph-play-fill"></i>
+                </button>
+                <button id="player-stop-btn" class="player-stop-btn" title="Stop">
+                  <i class="ph ph-stop-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- TAB 2: STUDY GUIDE -->
+            <div class="player-tab-panel" id="panel-guide">
+              <div class="guide-scroll-container">
+                <div class="guide-section">
+                  <h4>Sermon Outline</h4>
+                  <ul id="player-outline-list" class="outline-list">
+                    <!-- outline elements injected here -->
+                  </ul>
+                </div>
+                <div class="guide-section">
+                  <h4>Reflection Questions</h4>
+                  <div id="player-questions-list" class="questions-list">
+                    <!-- questions injected here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: NOTES -->
+            <div class="player-tab-panel" id="panel-notes">
+              <div class="notes-container">
+                <textarea id="player-notes-textarea" class="notes-textarea" placeholder="Take notes here as you listen..."></textarea>
+                <button id="player-save-notes-btn" class="btn-primary island-btn">
+                  <span>Save Notes</span>
+                  <div class="btn-icon"><i class="ph ph-floppy-disk"></i></div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- JS Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
