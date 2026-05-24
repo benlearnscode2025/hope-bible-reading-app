@@ -1244,6 +1244,21 @@ input:checked + .slider:before {
   .books-grid {
     grid-template-cols: repeat(3, 1fr);
   }
+
+  .scripture-card {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .scripture-card .inner-core {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2389,4 +2404,111 @@ input:checked + .slider:before {
   font-weight: 700;
   margin-top: 4px;
   display: block;
+}
+
+/* Immersive Distraction-Free Reader Mode */
+.app-header,
+.floating-nav,
+.reader-meta-bar {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.4s ease, 
+              visibility 0.4s ease;
+}
+
+body.distraction-free .app-header {
+  transform: translateY(-120%);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+body.distraction-free .floating-nav {
+  transform: translate(-50%, 150%) !important;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+@media (min-width: 1024px) {
+  body.distraction-free .floating-nav {
+    transform: translateY(150%) !important;
+  }
+}
+
+body.distraction-free .reader-meta-bar {
+  transform: translateY(-10px);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* Physical Bible Companion View */
+.physical-bible-card {
+  margin-top: 16px;
+  margin-bottom: 24px;
+  background: var(--color-ring);
+  border: 1px solid var(--color-border);
+  padding: 6px;
+  border-radius: var(--radius-outer);
+  box-shadow: var(--shadow-diffused);
+  transition: var(--transition-spring);
+  width: 100%;
+  animation: screenFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.physical-bible-card .inner-core {
+  background: var(--bg-card);
+  border-radius: calc(var(--radius-outer) - 6px);
+  box-shadow: var(--shadow-inset);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  min-height: 240px;
+  width: 100%;
+  height: 100%;
+}
+
+.physical-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px var(--color-accent-glow);
+}
+
+.physical-bible-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.physical-bible-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+.physical-bible-card .highlight-ref {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.physical-bible-card .desc-text {
+  font-size: 0.8rem;
+  margin-top: 12px;
+  font-style: italic;
+  opacity: 0.85;
 }
