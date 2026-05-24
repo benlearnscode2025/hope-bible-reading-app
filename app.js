@@ -781,7 +781,7 @@ async function loadSermonsLibrary() {
       </div>
     `;
     try {
-      const response = await fetch('sermons.json');
+      const response = await fetch(`sermons.json?v=${new Date().getTime()}`);
       sermons = await response.json();
       renderSpeakerFilters();
     } catch (e) {
@@ -1123,7 +1123,7 @@ function setupPlayerTabs() {
 async function renderRelatedSermons(bookName, chapter) {
   if (sermons.length === 0) {
     try {
-      const response = await fetch('sermons.json');
+      const response = await fetch(`sermons.json?v=${new Date().getTime()}`);
       sermons = await response.json();
     } catch (e) {
       console.error("Failed to load sermons for related section", e);
