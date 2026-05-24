@@ -1245,13 +1245,13 @@ input:checked + .slider:before {
     grid-template-cols: repeat(3, 1fr);
   }
 
-  .scripture-card {
+  .scripture-card:not(.expanded):not(.collapsing) {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
     box-shadow: none !important;
   }
-  .scripture-card .inner-core {
+  .scripture-card:not(.expanded):not(.collapsing) .inner-core {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
