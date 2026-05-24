@@ -247,6 +247,7 @@ const SCREENS = ['onboarding', 'reader', 'quiz', 'sermons', 'stats', 'settings']
 
 function navigateTo(screenId) {
   currentScreen = screenId;
+  document.body.classList.remove('distraction-free');
   // Save state on screen change
   saveState();
 
@@ -1384,8 +1385,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Scroll tracking for distraction-free reader mode
   let lastScrollTop = window.scrollY || document.documentElement.scrollTop;
   window.addEventListener('scroll', () => {
-    if (currentScreen !== 'reader') return;
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (currentScreen !== 'reader') {
+      lastScrollTop = scrollTop;
+      return;
+    }
     if (scrollTop > lastScrollTop && scrollTop > 80) {
       document.body.classList.add('distraction-free');
     } else if (scrollTop < lastScrollTop - 12) {
