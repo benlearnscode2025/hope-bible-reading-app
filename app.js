@@ -398,6 +398,7 @@ async function loadActiveChapter() {
         <i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>
         <h3>Unable to load scripture</h3>
         <p>Please check your connection and try again.</p>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; text-align: center; font-family: monospace;">Details: ${err.message || err}</p>
         <button id="retry-load-btn" class="btn-primary" style="margin-top: 12px; font-size: 0.85rem; padding: 8px 16px;">
           Retry
         </button>

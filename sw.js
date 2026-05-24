@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v18';
+const CACHE_NAME = 'hope-toledo-bible-cache-v19';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -13,7 +13,7 @@ const ASSETS_TO_CACHE = [
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js',
   'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Montserrat:ital,wght@0,400..900;1,400..900&family=Yellowtail&display=swap',
-  'https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.css'
+  'https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js'
 ];
 
 // Install Event - Caching App Shell
