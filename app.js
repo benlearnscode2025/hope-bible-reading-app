@@ -225,9 +225,20 @@ function loadState() {
   }
 }
 
-// Save state to local storage
+// Save state to local storage & cloud
 function saveState() {
+  // Save locally first
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  
+  // Save to cloud if user is authenticated and window.HopeFirebase is ready
+  if (window.HopeFirebase && state.user) {
+    const payload = { ...state };
+    delete payload.user; // Don't upload the ephemeral user object to Firestore
+    payload.sermonNotes = sermonNotes; // Include sermon notes in cloud sync
+    window.HopeFirebase.saveProgress(state.user.uid, payload).catch(err => {
+      console.error("Failed to save progress to cloud:", err);
+    });
+  }
 }
 
 // 4. UI Screen Navigation Management
@@ -747,6 +758,175 @@ function updateSettingsForm() {
 }
 
 // ==========================================================================
+// CLOUD PROGRESS SYNC HELPER FUNCTIONS
+// ==========================================================================
+
+let isSyncing = false;
+
+function handleAuthChange(user) {
+  state.user = user;
+  
+  const syncTitle = document.getElementById('sync-title');
+  const syncStatus = document.getElementById('sync-status');
+  const authTriggerBtn = document.getElementById('auth-trigger-btn');
+  
+  if (user) {
+    // User is signed in
+    if (syncTitle) syncTitle.textContent = "Cloud Sync Profile";
+    if (syncStatus) syncStatus.textContent = `Signed in as: ${user.email}`;
+    if (authTriggerBtn) authTriggerBtn.querySelector('span').textContent = "Sign Out";
+    
+    // Perform cloud sync merge
+    syncProgressWithCloud();
+  } else {
+    // User is signed out
+    if (syncTitle) syncTitle.textContent = "Cloud Sync";
+    if (syncStatus) syncStatus.textContent = "Sign in to save and sync progress across devices.";
+    if (authTriggerBtn) authTriggerBtn.querySelector('span').textContent = "Sign In";
+  }
+}
+
+async function syncProgressWithCloud() {
+  if (!state.user || !window.HopeFirebase || isSyncing) return;
+  
+  isSyncing = true;
+  showToast("Syncing progress with cloud...", "cloud-arrow-down");
+  
+  try {
+    const docSnap = await window.HopeFirebase.getProgress(state.user.uid);
+    if (docSnap && typeof docSnap.exists === 'function' && docSnap.exists()) {
+      const cloudData = docSnap.data();
+      if (cloudData) {
+        // Merge Completed Chapters
+        const mergedCompleted = { ...state.completedChapters };
+        let hasChaptersDiff = false;
+        
+        if (cloudData.completedChapters) {
+          for (const book in cloudData.completedChapters) {
+            if (!mergedCompleted[book]) {
+              mergedCompleted[book] = [];
+            }
+            const localList = mergedCompleted[book];
+            const cloudList = cloudData.completedChapters[book] || [];
+            
+            cloudList.forEach(ch => {
+              if (!localList.includes(ch)) {
+                localList.push(ch);
+                hasChaptersDiff = true;
+              }
+            });
+          }
+        }
+        
+        // Merge Sermon Notes
+        const mergedNotes = { ...sermonNotes };
+        let hasNotesDiff = false;
+        if (cloudData.sermonNotes) {
+          for (const sermonId in cloudData.sermonNotes) {
+            if (!mergedNotes[sermonId]) {
+              mergedNotes[sermonId] = cloudData.sermonNotes[sermonId];
+              hasNotesDiff = true;
+            } else if (mergedNotes[sermonId] !== cloudData.sermonNotes[sermonId]) {
+              // Simple resolution: keep the longer note
+              const localNote = mergedNotes[sermonId];
+              const cloudNote = cloudData.sermonNotes[sermonId];
+              if (cloudNote.length > localNote.length) {
+                mergedNotes[sermonId] = cloudNote;
+                hasNotesDiff = true;
+              }
+            }
+          }
+        }
+        
+        // Compare Streaks
+        const cloudStreak = cloudData.streak || 0;
+        let hasStreakDiff = false;
+        let newStreak = state.streak;
+        let newLastReadDate = state.lastReadDate;
+        
+        if (cloudStreak > state.streak) {
+          newStreak = cloudStreak;
+          newLastReadDate = cloudData.lastReadDate || state.lastReadDate;
+          hasStreakDiff = true;
+        }
+        
+        // Compare current active chapter / reading path
+        let hasActivePathDiff = false;
+        let newBookIndex = state.currentBookIndex;
+        let newChapter = state.currentChapter;
+        
+        if (cloudData.currentBookIndex !== undefined && cloudData.currentChapter !== undefined) {
+          const cloudTotalProgress = (cloudData.currentBookIndex * 150) + cloudData.currentChapter;
+          const localTotalProgress = (state.currentBookIndex * 150) + state.currentChapter;
+          if (cloudTotalProgress > localTotalProgress) {
+            newBookIndex = cloudData.currentBookIndex;
+            newChapter = cloudData.currentChapter;
+            hasActivePathDiff = true;
+          }
+        }
+        
+        // Merge quiz scores
+        const mergedScores = [...state.scores];
+        let hasScoresDiff = false;
+        if (cloudData.scores && Array.isArray(cloudData.scores)) {
+          cloudData.scores.forEach(cloudScore => {
+            const exists = mergedScores.some(localScore => 
+              localScore.date === cloudScore.date && 
+              localScore.book === cloudScore.book && 
+              localScore.chapter === cloudScore.chapter
+            );
+            if (!exists) {
+              mergedScores.push(cloudScore);
+              hasScoresDiff = true;
+            }
+          });
+        }
+        
+        // If anything changed, update local state
+        const stateChanged = hasChaptersDiff || hasStreakDiff || hasActivePathDiff || hasScoresDiff;
+        
+        if (stateChanged || hasNotesDiff) {
+          state.completedChapters = mergedCompleted;
+          state.streak = newStreak;
+          state.lastReadDate = newLastReadDate;
+          state.currentBookIndex = newBookIndex;
+          state.currentChapter = newChapter;
+          state.scores = mergedScores;
+          
+          if (hasNotesDiff) {
+            sermonNotes = mergedNotes;
+            saveSermonNotes();
+          }
+          
+          // Save and refresh UI
+          saveState();
+          
+          const activeScreen = document.querySelector('.screen.active');
+          if (activeScreen && activeScreen.id === 'screen-reader') {
+            loadActiveChapter();
+          } else if (activeScreen && activeScreen.id === 'screen-stats') {
+            renderStats();
+          }
+        }
+      }
+    }
+    
+    // Write back local state to cloud to make sure cloud is fully merged as well
+    const payload = { ...state };
+    delete payload.user;
+    payload.sermonNotes = sermonNotes;
+    await window.HopeFirebase.saveProgress(state.user.uid, payload);
+    
+    showToast("Progress synced successfully!", "cloud-check");
+  } catch (err) {
+    console.error("Cloud sync failed:", err);
+    showToast("Sync failed. Check connection.", "wifi-high-slash");
+  } finally {
+    isSyncing = false;
+  }
+}
+
+// ==========================================================================
 // SERMON INTEGRATION CORE FUNCTIONS
 // ==========================================================================
 
@@ -1222,12 +1402,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.documentElement.removeAttribute('data-theme');
       state.theme = 'light';
       themeBtn.innerHTML = '<i class="ph ph-moon"></i>';
-      showToast("Theme set to Light mode", "sun");
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
       state.theme = 'dark';
       themeBtn.innerHTML = '<i class="ph ph-sun"></i>';
-      showToast("Theme set to Dark mode", "moon");
     }
     saveState();
   });
@@ -1341,6 +1519,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('reset-progress-btn').addEventListener('click', () => {
     if (confirm("Are you absolutely sure you want to delete all reading progress and streaks? This cannot be undone.")) {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('hope_sermon_notes');
+      sermonNotes = {};
       state = {
         translation: 'kjv',
         fontFamily: 'serif',
@@ -1495,6 +1675,133 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(reg => console.log('Service Worker registered successfully', reg.scope))
         .catch(err => console.error('Service Worker registration failed', err));
     }
+  }
+
+  // ==========================================
+  // CLOUD SYNC & AUTHENTICATION EVENT LISTENERS
+  // ==========================================
+  const authModal = document.getElementById('auth-modal');
+  const authTriggerBtn = document.getElementById('auth-trigger-btn');
+  const closeAuthModalBtn = document.getElementById('close-auth-modal-btn');
+  const tabSigninBtn = document.getElementById('tab-signin-btn');
+  const tabSignupBtn = document.getElementById('tab-signup-btn');
+  const authForm = document.getElementById('auth-form');
+  const googleSigninBtn = document.getElementById('google-signin-btn');
+  
+  let currentAuthTab = 'signin'; // 'signin' or 'signup'
+
+  if (authTriggerBtn) {
+    authTriggerBtn.addEventListener('click', () => {
+      if (state.user) {
+        if (confirm("Are you sure you want to sign out? Your offline progress will still be saved on this device.")) {
+          window.HopeFirebase.signOut().then(() => {
+            showToast("Signed out successfully", "sign-out");
+          }).catch(err => {
+            console.error(err);
+            showToast("Failed to sign out", "x-circle");
+          });
+        }
+      } else {
+        if (authModal) authModal.classList.remove('hidden');
+      }
+    });
+  }
+
+  if (closeAuthModalBtn) {
+    closeAuthModalBtn.addEventListener('click', () => {
+      if (authModal) authModal.classList.add('hidden');
+    });
+  }
+
+  function setAuthTab(tab) {
+    currentAuthTab = tab;
+    const modalTitle = document.getElementById('auth-modal-title');
+    const submitText = document.getElementById('auth-submit-text');
+    
+    if (tab === 'signin') {
+      if (tabSigninBtn) tabSigninBtn.classList.add('active');
+      if (tabSignupBtn) tabSignupBtn.classList.remove('active');
+      if (modalTitle) modalTitle.textContent = "Sign In";
+      if (submitText) submitText.textContent = "Sign In";
+    } else {
+      if (tabSigninBtn) tabSigninBtn.classList.remove('active');
+      if (tabSignupBtn) tabSignupBtn.classList.add('active');
+      if (modalTitle) modalTitle.textContent = "Create Account";
+      if (submitText) submitText.textContent = "Create Account";
+    }
+  }
+
+  if (tabSigninBtn) {
+    tabSigninBtn.addEventListener('click', () => setAuthTab('signin'));
+  }
+  if (tabSignupBtn) {
+    tabSignupBtn.addEventListener('click', () => setAuthTab('signup'));
+  }
+
+  if (authForm) {
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const submitBtn = document.getElementById('auth-submit-btn');
+      
+      if (!email || !password) return;
+      
+      const originalHtml = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Loading...</span> <div class="btn-icon"><i class="ph ph-spinner"></i></div>`;
+      
+      try {
+        if (currentAuthTab === 'signin') {
+          await window.HopeFirebase.signIn(email, password);
+          showToast("Welcome back!", "check-circle");
+        } else {
+          await window.HopeFirebase.signUp(email, password);
+          showToast("Account created successfully!", "sparkle");
+        }
+        
+        if (authModal) authModal.classList.add('hidden');
+        authForm.reset();
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Authentication failed", "x-circle");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHtml;
+      }
+    });
+  }
+
+  if (googleSigninBtn) {
+    googleSigninBtn.addEventListener('click', async () => {
+      const originalText = googleSigninBtn.querySelector('span').textContent;
+      googleSigninBtn.disabled = true;
+      googleSigninBtn.querySelector('span').textContent = "Signing In...";
+      
+      try {
+        await window.HopeFirebase.signInWithGoogle();
+        showToast("Signed in with Google successfully!", "check-circle");
+        if (authModal) authModal.classList.add('hidden');
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || "Google Sign-In failed", "x-circle");
+      } finally {
+        googleSigninBtn.disabled = false;
+        googleSigninBtn.querySelector('span').textContent = originalText;
+      }
+    });
+  }
+
+  // Listen to Auth state change from firebase-config
+  if (window.HopeFirebase) {
+    window.HopeFirebase.onAuthChange(handleAuthChange);
+  } else {
+    window.addEventListener('firebase-ready', () => {
+      if (window.HopeFirebase) {
+        window.HopeFirebase.onAuthChange(handleAuthChange);
+      }
+    });
   }
 });
 

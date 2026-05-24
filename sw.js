@@ -1,8 +1,9 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v3';
+const CACHE_NAME = 'hope-toledo-bible-cache-v4';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
   'app.js',
+  'firebase-config.js',
   'manifest.json',
   'topographic.svg',
   'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Outfit:wght@300;400;500;600;700;800&display=swap',
