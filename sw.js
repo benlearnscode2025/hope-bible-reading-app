@@ -6,7 +6,7 @@ const ASSETS_TO_CACHE = [
   'firebase-config.js',
   'manifest.json',
   'topographic.svg',
-  'assets/brand/_-10.svg',
+  'assets/brand/_-05.svg',
   'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Montserrat:ital,wght@0,400..900;1,400..900&family=Yellowtail&display=swap',
   'https://unpkg.com/@phosphor-icons/web@2.0.3'
 ];
@@ -75,25 +75,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default assets cache-first with network fallback
+  // Default assets stale-while-revalidate (prevents cache trap for app updates)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            if (event.request.url.startsWith(self.location.origin) || event.request.url.includes('googleapis') || event.request.url.includes('unpkg')) {
+              cache.put(event.request, responseClone);
+            }
+          });
+        }
+        return networkResponse;
+      });
+
       if (cachedResponse) {
+        // Update cache in the background, extend event lifetime
+        event.waitUntil(fetchPromise.catch(() => {}));
         return cachedResponse;
       }
-      return fetch(event.request).then((networkResponse) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          // Check if it's a local asset or a static CDN asset
-          if (event.request.url.startsWith(self.location.origin) || event.request.url.includes('googleapis') || event.request.url.includes('unpkg')) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        });
-      }).catch(() => {
-        // Fallback for document requests (offline)
+
+      return fetchPromise.catch((err) => {
         if (event.request.mode === 'navigate') {
           return caches.match('index.html');
         }
+        throw err;
       });
     })
   );

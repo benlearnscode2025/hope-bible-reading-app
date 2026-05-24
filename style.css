@@ -210,7 +210,7 @@ body.has-player .app-main {
   justify-content: center;
   background: var(--bg-card);
   border: 1px solid var(--color-border);
-  padding: 6px 14px;
+  padding: 8px;
   border-radius: var(--radius-inner);
   box-shadow: var(--shadow-diffused);
   transition: var(--transition-spring);
@@ -223,14 +223,14 @@ body.has-player .app-main {
 }
 
 .header-logo-brand {
-  width: 105px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   background-color: var(--color-accent);
-  mask-image: url('assets/brand/_-10.svg');
+  mask-image: url('assets/brand/_-05.svg');
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
-  -webkit-mask-image: url('assets/brand/_-10.svg');
+  -webkit-mask-image: url('assets/brand/_-05.svg');
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
@@ -1909,6 +1909,21 @@ input:checked + .slider:before {
     gap: 24px 40px;
     padding: 32px 24px;
     align-items: start;
+  }
+
+  /* Center layout when navigation is hidden (e.g. Onboarding/Auth screen) */
+  .app-container:has(#floating-nav.hidden) {
+    grid-template-columns: 1fr;
+    max-width: 680px;
+  }
+  .app-container:has(#floating-nav.hidden) .app-header {
+    grid-column: 1;
+    border-bottom: none;
+    margin-bottom: 28px;
+    padding-bottom: 0;
+  }
+  .app-container:has(#floating-nav.hidden) .app-main {
+    grid-column: 1;
   }
 
   .floating-nav {
