@@ -195,7 +195,8 @@ let state = {
   notificationsEnabled: false,
   notificationTime: "08:00",
   onboarded: false,
-  theme: 'light'
+  theme: 'light',
+  isPhysicalMode: localStorage.getItem('hope_physical_mode') === 'true'
 };
 
 // Sermon State Variables
@@ -209,7 +210,6 @@ let isSeeking = false;
 let activeSpeakerFilter = "All";
 let sermonSearchQuery = "";
 let currentScreen = 'reader';
-let isPhysicalMode = localStorage.getItem('hope_physical_mode') === 'true';
 
 
 // Local storage key name
@@ -333,12 +333,17 @@ async function fetchBibleText(book, chapter, translation) {
 
 async function loadActiveChapter() {
   const container = document.getElementById('scripture-container');
+  if (!container) return;
+
   const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
   const chapter = state.currentChapter;
   
   // Update Book Title and Chapter metadata
-  document.getElementById('reader-book-title').textContent = bookName;
-  document.getElementById('reader-chapter-num').textContent = `Chapter ${chapter}`;
+  const bookTitleEl = document.getElementById('reader-book-title');
+  if (bookTitleEl) bookTitleEl.textContent = bookName;
+
+  const chapterNumEl = document.getElementById('reader-chapter-num');
+  if (chapterNumEl) chapterNumEl.textContent = `Chapter ${chapter}`;
   
   // Reset completed button state
   const completeBtn = document.getElementById('complete-chapter-btn');
@@ -351,7 +356,7 @@ async function loadActiveChapter() {
   isChapterReadCompleted = false;
 
   // If in Physical Bible Mode, show companion screen card instead
-  if (isPhysicalMode) {
+  if (state.isPhysicalMode) {
     container.innerHTML = `
       <div class="physical-bible-card double-bezel">
         <div class="inner-core">
@@ -1524,7 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function updatePhysicalBtnUI() {
     if (!physicalBtn) return;
-    if (isPhysicalMode) {
+    if (state.isPhysicalMode) {
       physicalBtn.classList.add('active');
       physicalBtn.setAttribute('title', 'Switch to Web Scripture text');
       const icon = physicalBtn.querySelector('i');
@@ -1540,8 +1545,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (physicalBtn) {
     updatePhysicalBtnUI();
     physicalBtn.addEventListener('click', () => {
-      isPhysicalMode = !isPhysicalMode;
-      localStorage.setItem('hope_physical_mode', isPhysicalMode);
+      state.isPhysicalMode = !state.isPhysicalMode;
+      saveState();
       updatePhysicalBtnUI();
       loadActiveChapter(); // Re-render reader view
     });
@@ -1623,6 +1628,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirm("Are you absolutely sure you want to delete all reading progress and streaks? This cannot be undone.")) {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('hope_sermon_notes');
+      localStorage.removeItem('hope_physical_mode');
       sermonNotes = {};
       state = {
         translation: 'kjv',
@@ -1637,7 +1643,8 @@ document.addEventListener('DOMContentLoaded', () => {
         notificationsEnabled: false,
         notificationTime: "08:00",
         onboarded: false,
-        theme: 'light'
+        theme: 'light',
+        isPhysicalMode: false
       };
       
       // Update UI theme
