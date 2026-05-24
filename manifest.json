@@ -1,0 +1,22 @@
+{
+  "name": "Hope Toledo Bible Tracker",
+  "short_name": "Hope Bible",
+  "description": "Daily Bible Reading Tracker for Hope Baptist Church",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#FAF7F2",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
