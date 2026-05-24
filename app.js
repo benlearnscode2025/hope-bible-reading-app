@@ -209,6 +209,7 @@ let isSeeking = false;
 let activeSpeakerFilter = "All";
 let sermonSearchQuery = "";
 let currentScreen = 'reader';
+let isPhysicalMode = localStorage.getItem('hope_physical_mode') === 'true';
 
 
 // Local storage key name
@@ -341,9 +342,39 @@ async function loadActiveChapter() {
   
   // Reset completed button state
   const completeBtn = document.getElementById('complete-chapter-btn');
-  completeBtn.classList.add('disabled');
-  completeBtn.disabled = true;
+  if (completeBtn) {
+    completeBtn.classList.add('disabled');
+    completeBtn.disabled = true;
+    const btnSpan = completeBtn.querySelector('span');
+    if (btnSpan) btnSpan.textContent = 'Complete & Take Quiz';
+  }
   isChapterReadCompleted = false;
+
+  // If in Physical Bible Mode, show companion screen card instead
+  if (isPhysicalMode) {
+    container.innerHTML = `
+      <div class="physical-bible-card double-bezel">
+        <div class="inner-core">
+          <div class="physical-icon-wrapper">
+            <i class="ph-fill ph-book-bookmark"></i>
+          </div>
+          <h3>Physical Bible Mode</h3>
+          <p>Please open your physical copy of God's Word to</p>
+          <p class="highlight-ref">${bookName} Chapter ${chapter}</p>
+          <p class="desc-text">Read carefully and reflect on the text. Tap the button below when you are finished to take your daily quiz.</p>
+        </div>
+      </div>
+    `;
+    
+    if (completeBtn) {
+      completeBtn.classList.remove('disabled');
+      completeBtn.disabled = false;
+      const btnSpan = completeBtn.querySelector('span');
+      if (btnSpan) btnSpan.textContent = 'Finished Reading - Take Quiz';
+    }
+    isChapterReadCompleted = true;
+    return;
+  }
 
   // Show Skeleton Loader
   container.innerHTML = `
@@ -1487,6 +1518,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     showToast(`Font switched to ${state.fontFamily === 'serif' ? 'Serif' : 'Sans-Serif'}`, "text-aa");
   });
+
+  // PHYSICAL BIBLE MODE TOGGLE
+  const physicalBtn = document.getElementById('btn-physical-bible');
+  
+  function updatePhysicalBtnUI() {
+    if (!physicalBtn) return;
+    if (isPhysicalMode) {
+      physicalBtn.classList.add('active');
+      physicalBtn.setAttribute('title', 'Switch to Web Scripture text');
+      const icon = physicalBtn.querySelector('i');
+      if (icon) icon.className = 'ph-fill ph-book-open';
+    } else {
+      physicalBtn.classList.remove('active');
+      physicalBtn.setAttribute('title', 'Read from Physical Bible');
+      const icon = physicalBtn.querySelector('i');
+      if (icon) icon.className = 'ph ph-book-open';
+    }
+  }
+  
+  if (physicalBtn) {
+    updatePhysicalBtnUI();
+    physicalBtn.addEventListener('click', () => {
+      isPhysicalMode = !isPhysicalMode;
+      localStorage.setItem('hope_physical_mode', isPhysicalMode);
+      updatePhysicalBtnUI();
+      loadActiveChapter(); // Re-render reader view
+    });
+  }
 
   // COMPLETE CHAPTER TRIGGER
   document.getElementById('complete-chapter-btn').addEventListener('click', () => {
