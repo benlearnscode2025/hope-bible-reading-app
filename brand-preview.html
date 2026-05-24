@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hope Baptist Brand Assets Preview</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8f7f4;
+      color: #322b29;
+      padding: 40px;
+      margin: 0;
+    }
+    h1 {
+      border-bottom: 2px solid #1d492f;
+      padding-bottom: 10px;
+      color: #1d492f;
+    }
+    .grid {
+      display: grid;
+      grid-template-cols: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+      margin-top: 30px;
+      margin-bottom: 60px;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e0dcd3;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(50,43,41,0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card img, .card svg {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 15px;
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+      color: #1d492f;
+    }
+    .card-meta {
+      font-size: 0.85rem;
+      color: #7e706a;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Hope Baptist Church - Brand Assets Preview</h1>
+  
+  <h2>SVG Illustrations (from Illustrations folder)</h2>
+  <div class="grid">
+    <script>
+      const svgFiles = [
+        '_-01.svg', '_-02.svg', '_-03.svg', '_-04.svg', '_-05.svg', 
+        '_-06.svg', '_-07.svg', '_-08.svg', '_-09.svg', '_-10.svg', '_-11.svg'
+      ];
+      document.write(svgFiles.map(file => `
+        <div class="card">
+          <img src="assets/brand/${file}" alt="${file}">
+          <div class="card-title">${file}</div>
+          <div class="card-meta">Vector Illustration</div>
+        </div>
+      `).join(''));
+    </script>
+  </div>
+
+  <h2>Topographic Maps (from Topographic Maps folder)</h2>
+  <div class="grid">
+    <script>
+      const topoFiles = ['Topographic-01.svg', 'Topographic-02.svg', 'Topographic-03.svg'];
+      document.write(topoFiles.map(file => `
+        <div class="card">
+          <img src="assets/brand/${file}" alt="${file}" style="background: #e0dcd3; padding: 10px; border-radius: 6px;">
+          <div class="card-title">${file}</div>
+          <div class="card-meta">Topographic Contour</div>
+        </div>
+      `).join(''));
+    </script>
+  </div>
+
+  <h2>JPG Logos (from JPG folder)</h2>
+  <div class="grid">
+    <script>
+      const jpgFiles = [
+        '__Primary-Hickory.jpg', '__Primary-Coal.jpg', '__Primary-Snow.jpg', 
+        '__Primary-Sky.jpg', '__Primary-Carnation.jpg', '__Primary-Tulip.jpg', 
+        '__Primary-Buckeye.jpg', '__Primary-Tawny.jpg'
+      ];
+      document.write(jpgFiles.map(file => `
+        <div class="card">
+          <img src="assets/brand/${file}" alt="${file}">
+          <div class="card-title">${file}</div>
+          <div class="card-meta">Logo Raster Image</div>
+        </div>
+      `).join(''));
+    </script>
+  </div>
+
+</body>
+</html>

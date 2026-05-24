@@ -236,18 +236,16 @@ body.has-player .app-main {
 }
 
 .header-logo-brand {
-  width: 64px;
   height: 64px;
-  background-image: url('assets/brand/__Primary-Coal.jpg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  width: auto;
+  max-width: 280px;
+  display: block;
   mix-blend-mode: multiply;
   transition: var(--transition-fast);
 }
 
 [data-theme='dark'] .header-logo-brand {
-  background-image: url('assets/brand/__Primary-Snow.jpg');
+  content: url('assets/brand/__Primary-Snow.jpg');
   mix-blend-mode: screen;
 }
 
