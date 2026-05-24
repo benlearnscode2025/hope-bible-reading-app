@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v15';
+const CACHE_NAME = 'hope-toledo-bible-cache-v16';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -48,20 +48,23 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
     return;
   }
-
   // If fetching scripture text from bible-api.com, cache it aggressively so it works offline
   if (url.hostname === 'bible-api.com') {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
-        return cache.match(event.request).then((cachedResponse) => {
+        return cache.match(event.request.url).then((cachedResponse) => {
           if (cachedResponse) {
             return cachedResponse; // Cache Hit
           }
-          return fetch(event.request).then((networkResponse) => {
-            cache.put(event.request, networkResponse.clone());
+          // Fetch the URL string to bypass iOS/Safari WebKit header security bugs for cross-origin fetches
+          return fetch(event.request.url).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request.url, networkResponse.clone());
+            }
             return networkResponse;
-          }).catch(() => {
-            // Offline and no cache, returns a fallback error structure or blank response
+          }).catch((err) => {
+            console.error("Service worker fetch failed for bible-api.com", err);
+            // Offline and no cache, returns a fallback error structure
             return new Response(JSON.stringify({
               error: "Offline",
               text: "You are currently offline. Please reconnect to read this chapter."
@@ -74,7 +77,6 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-
   // Default assets stale-while-revalidate (prevents cache trap for app updates)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
