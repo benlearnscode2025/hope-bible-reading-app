@@ -920,7 +920,15 @@ async function syncProgressWithCloud() {
     showToast("Progress synced successfully!", "cloud-check");
   } catch (err) {
     console.error("Cloud sync failed:", err);
-    showToast("Sync failed. Check connection.", "wifi-high-slash");
+    let errorMsg = "Sync failed. Check connection.";
+    if (err && err.message) {
+      if (err.message.includes("permission-denied") || err.message.includes("insufficient permissions")) {
+        errorMsg = "Sync failed: Insufficient permissions. Check your Firestore Database Rules.";
+      } else {
+        errorMsg = `Sync failed: ${err.message}`;
+      }
+    }
+    showToast(errorMsg, "wifi-high-slash");
   } finally {
     isSyncing = false;
   }
