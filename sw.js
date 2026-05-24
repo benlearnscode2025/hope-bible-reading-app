@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v16';
+const CACHE_NAME = 'hope-toledo-bible-cache-v17';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -7,6 +7,11 @@ const ASSETS_TO_CACHE = [
   'manifest.json',
   'topographic.svg',
   'assets/brand/_-05.svg',
+  'assets/brand/__Primary-Coal.jpg',
+  'sermons.json',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js',
   'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Montserrat:ital,wght@0,400..900;1,400..900&family=Yellowtail&display=swap',
   'https://unpkg.com/@phosphor-icons/web@2.0.3'
 ];
@@ -79,13 +84,16 @@ self.addEventListener('fetch', (event) => {
   }
   // Default assets stale-while-revalidate (prevents cache trap for app updates)
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
+    caches.match(event.request.url).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request.url).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            if (event.request.url.startsWith(self.location.origin) || event.request.url.includes('googleapis') || event.request.url.includes('unpkg')) {
-              cache.put(event.request, responseClone);
+            if (event.request.url.startsWith(self.location.origin) || 
+                event.request.url.includes('googleapis') || 
+                event.request.url.includes('gstatic') || 
+                event.request.url.includes('unpkg')) {
+              cache.put(event.request.url, responseClone);
             }
           });
         }
