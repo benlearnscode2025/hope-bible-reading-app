@@ -1790,7 +1790,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (authModal) authModal.classList.add('hidden');
       } catch (err) {
         console.error(err);
-        showToast(err.message || "Google Sign-In failed", "x-circle");
+        let errorMsg = "Google Sign-In failed";
+        let icon = "x-circle";
+        
+        if (err.code === 'auth/popup-blocked') {
+          errorMsg = "Popup blocked by your adblocker. Please allow popups or use Email/Password.";
+          icon = "warning";
+        } else if (err.code === 'auth/popup-closed-by-user') {
+          errorMsg = "Sign-in window closed before completion.";
+          icon = "warning";
+        } else if (err.code === 'auth/unauthorized-domain') {
+          errorMsg = "This domain is not authorized in the Firebase Console.";
+          icon = "x-circle";
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+        
+        showToast(errorMsg, icon);
       } finally {
         googleSigninBtn.disabled = false;
         googleSigninBtn.querySelector('span').textContent = originalText;
