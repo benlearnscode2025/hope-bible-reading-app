@@ -1316,8 +1316,8 @@ input:checked + .slider:before {
 .sermons-container-card .inner-core {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  max-height: 75dvh;
+  height: auto;
+  max-height: none;
 }
 
 .sermon-search-container {
