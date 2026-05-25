@@ -478,7 +478,12 @@ async function loadActiveChapter() {
     }
 
     // Render Scripture Text
-    let htmlContent = `<div class="expanded-reference-header">${bookName} ${chapter}</div>`;
+    let htmlContent = `
+      <div class="expanded-reference-header">
+        <span>${bookName} ${chapter}</span>
+        <button class="fullscreen-close-btn icon-btn small" title="Exit Fullscreen"><i class="ph ph-x"></i></button>
+      </div>
+    `;
     htmlContent += `<div class="bible-text ${state.fontFamily === 'sans' ? 'sans-serif' : ''}" style="font-size: ${state.fontSize}%">`;
     
     if (data.verses && data.verses.length > 0) {
@@ -1972,32 +1977,45 @@ document.addEventListener('DOMContentLoaded', () => {
     lastScrollTop = scrollTop;
   }, { passive: true });
 
-  // Immersive reader card expansion toggle
+  // Fullscreen reader toggle via dedicated button
+  const fullscreenBtn = document.getElementById('btn-fullscreen-reader');
   const scriptureCard = document.querySelector('.scripture-card');
+  
+  if (fullscreenBtn && scriptureCard) {
+    fullscreenBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Only expand if it's not physical mode
+      if (state.isPhysicalMode) return;
+      
+      scriptureCard.classList.add('expanded');
+      document.body.classList.add('reader-expanded', 'distraction-free');
+    });
+  }
+
+  // Collapse reader when clicking the close button or expanded card background
   if (scriptureCard) {
     scriptureCard.addEventListener('click', (e) => {
-      // Ignore click on links, buttons, related sermons, or customizer elements
-      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.reader-customizer') || e.target.closest('.related-sermon-card')) {
-        return;
+      if (!scriptureCard.classList.contains('expanded')) return;
+      
+      const closeBtn = e.target.closest('.fullscreen-close-btn');
+      const isCardClick = e.target.classList.contains('inner-core') || e.target.classList.contains('scripture-card') || e.target.closest('.expanded-reference-header');
+      
+      // Only collapse if clicked close button or the card background/header itself
+      if (!closeBtn && !isCardClick) {
+        return; // Don't collapse if clicking the text verses (to allow selecting/reading)
       }
+      
       // Ignore click if user is selecting text
       const selection = window.getSelection().toString();
       if (selection.length > 0) return;
 
-      const isExpanded = scriptureCard.classList.contains('expanded');
-      if (isExpanded) {
-        // Collapse card
-        scriptureCard.classList.remove('expanded');
-        scriptureCard.classList.add('collapsing');
-        document.body.classList.remove('reader-expanded', 'distraction-free');
-        setTimeout(() => {
-          scriptureCard.classList.remove('collapsing');
-        }, 300);
-      } else {
-        // Expand card
-        scriptureCard.classList.add('expanded');
-        document.body.classList.add('reader-expanded', 'distraction-free');
-      }
+      // Collapse card
+      scriptureCard.classList.remove('expanded');
+      scriptureCard.classList.add('collapsing');
+      document.body.classList.remove('reader-expanded', 'distraction-free');
+      setTimeout(() => {
+        scriptureCard.classList.remove('collapsing');
+      }, 300);
     });
   }
 

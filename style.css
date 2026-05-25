@@ -2565,16 +2565,31 @@ body.distraction-free .reader-meta-bar {
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 500;
-  text-align: center;
-  margin-bottom: 2rem;
   color: var(--text-primary);
   opacity: 0.85;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .scripture-card.expanded .expanded-reference-header {
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fullscreen-close-btn {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-inset) !important;
+  transition: all 0.2s ease !important;
+}
+
+.fullscreen-close-btn:hover {
+  background: var(--color-accent-light) !important;
+  color: var(--color-accent) !important;
+  transform: scale(1.05);
 }
 
 @keyframes expandCardAnimation {
@@ -3128,3 +3143,148 @@ body.reader-expanded .screen.active,
 }
 
 
+/* Widescreen Desktop Full-Height Layout (No Page-Level Scrolling) */
+@media (min-width: 1024px) {
+  body {
+    overflow: hidden !important;
+  }
+
+  .app-container {
+    height: 100dvh !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+  }
+
+  .floating-nav {
+    height: 100% !important;
+  }
+
+  .app-main {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Center card layout for onboarding and quiz screen elements */
+  #screen-onboarding.screen.active,
+  #screen-quiz.screen.active {
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  #screen-onboarding .onboarding-card,
+  #screen-quiz .quiz-card {
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Make main content screens fill screen height and scroll contents internally */
+  #screen-reader.screen.active,
+  #screen-sermons.screen.active,
+  #screen-stats.screen.active,
+  #screen-settings.screen.active {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden !important;
+  }
+
+  .scripture-card {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+  }
+
+  .scripture-card .inner-core {
+    flex-grow: 1;
+    height: 100%;
+    min-height: 0;
+    max-height: none !important;
+    overflow-y: auto !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sermons-container-card {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0 !important;
+  }
+
+  .sermons-container-card .inner-core {
+    flex-grow: 1;
+    height: 100%;
+    min-height: 0;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  .sermon-view-panel:not(.hidden) {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  #sermons-video-view {
+    overflow-y: auto !important;
+  }
+
+  .settings-card {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .settings-card .inner-core {
+    flex-grow: 1;
+    height: 100%;
+    min-height: 0;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+  }
+
+  .stats-grid {
+    height: 100%;
+    min-height: 0;
+    display: grid !important;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .bento-card {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bento-card .inner-core {
+    flex-grow: 1;
+    height: 100%;
+    min-height: 0;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+  }
+
+  .books-grid {
+    flex-grow: 1;
+    overflow-y: auto !important;
+    max-height: none !important;
+  }
+}
