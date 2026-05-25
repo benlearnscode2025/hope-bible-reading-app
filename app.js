@@ -1703,26 +1703,61 @@ function renderYouTubeStreams() {
   if (!gridContainer) return;
 
   gridContainer.innerHTML = youtubeVideos.map(video => `
-    <div class="youtube-video-card" data-id="${video.videoId}">
-      <div class="youtube-video-thumbnail">
-        <img src="https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg" alt="${video.title}" loading="lazy">
+    <div class="youtube-video-accordion" data-id="${video.videoId}">
+      <div class="youtube-accordion-header">
+        <div class="youtube-video-info">
+          <h3 class="youtube-video-title">${video.title}</h3>
+          <span class="youtube-video-date">
+            <i class="ph ph-calendar-blank"></i>
+            ${video.publishedDate}
+          </span>
+        </div>
+        <div class="youtube-accordion-icon">
+          <i class="ph ph-caret-down"></i>
+        </div>
       </div>
-      <div class="youtube-video-info">
-        <h3 class="youtube-video-title">${video.title}</h3>
-        <span class="youtube-video-date">
-          <i class="ph ph-calendar-blank"></i>
-          ${video.publishedDate}
-        </span>
+      <div class="youtube-accordion-body">
+        <div class="youtube-video-thumbnail">
+          <img src="https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg" alt="${video.title}" loading="lazy">
+          <div class="play-overlay">
+            <div class="play-btn-circle">
+              <i class="ph-fill ph-play"></i>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `).join('');
 
-  gridContainer.querySelectorAll('.youtube-video-card').forEach(card => {
-    card.addEventListener('click', () => {
+  gridContainer.querySelectorAll('.youtube-video-accordion').forEach(card => {
+    const header = card.querySelector('.youtube-accordion-header');
+    const playBtn = card.querySelector('.play-btn-circle');
+    const overlay = card.querySelector('.play-overlay');
+    
+    // Toggle accordion
+    header.addEventListener('click', () => {
+      const isExpanded = card.classList.contains('expanded');
+      
+      // Close all others
+      gridContainer.querySelectorAll('.youtube-video-accordion').forEach(c => {
+        c.classList.remove('expanded');
+      });
+      
+      if (!isExpanded) {
+        card.classList.add('expanded');
+      }
+    });
+
+    // Play video
+    const triggerPlay = (e) => {
+      e.stopPropagation();
       const videoId = card.getAttribute('data-id');
       const title = card.querySelector('.youtube-video-title').textContent;
       openVideoPlayer(videoId, title);
-    });
+    };
+
+    if (playBtn) playBtn.addEventListener('click', triggerPlay);
+    if (overlay) overlay.addEventListener('click', triggerPlay);
   });
 }
 
