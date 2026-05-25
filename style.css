@@ -315,6 +315,7 @@ body.has-player .app-main {
 .screen.active {
   display: flex;
   flex-direction: column;
+  opacity: 1;
   animation: screenFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -2644,6 +2645,7 @@ body.reader-expanded .screen.active,
 .screen.active:has(.scripture-card.collapsing) {
   transform: none !important;
   animation: none !important;
+  opacity: 1 !important;
 }
 
 /* YouTube Streaming & Stream History Integration */
