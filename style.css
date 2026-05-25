@@ -934,7 +934,7 @@ body.has-player .app-main {
 
 .books-grid {
   display: grid;
-  grid-template-cols: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   max-height: 250px;
   overflow-y: auto;
@@ -958,19 +958,29 @@ body.has-player .app-main {
 }
 
 .book-pill {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 10px 4px;
   background: var(--bg-primary);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
   transition: var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.book-pill .book-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
+  max-width: 100%;
 }
 
 .book-pill:hover {
@@ -1241,7 +1251,7 @@ input:checked + .slider:before {
   }
 
   .books-grid {
-    grid-template-cols: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .scripture-card:not(.expanded):not(.collapsing) {
@@ -1293,7 +1303,7 @@ input:checked + .slider:before {
   }
 
   .books-grid {
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   .player-btn.mini-btn {
@@ -3052,6 +3062,10 @@ body.reader-expanded .screen.active,
 .dialog-book-pill .book-name {
   font-size: 0.8rem;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .dialog-book-pill:hover .book-name {
