@@ -182,21 +182,43 @@
             <h2 class="screen-title">Sermons</h2>
             <p class="subtitle">Search and listen to recent messages from Hope Baptist Church.</p>
             
-            <div class="sermon-search-container">
-              <div class="search-input-wrapper">
-                <i class="ph ph-magnifying-glass search-icon"></i>
-                <input type="text" id="sermon-search-input" placeholder="Search by title, scripture, or topic...">
-              </div>
+            <!-- Segment Toggle -->
+            <div class="sermon-segment-control">
+              <button id="sermon-tab-audio" class="segment-btn active" data-tab="audio">Audio Library</button>
+              <button id="sermon-tab-video" class="segment-btn" data-tab="video">YouTube Streams</button>
             </div>
-            
-            <div class="speaker-filter-container">
-              <div class="filter-chips" id="sermon-speaker-chips">
+
+            <!-- AUDIO SERMONS VIEW -->
+            <div id="sermons-audio-view" class="sermon-view-panel active">
+              <div class="sermon-search-container">
+                <div class="search-input-wrapper">
+                  <i class="ph ph-magnifying-glass search-icon"></i>
+                  <input type="text" id="sermon-search-input" placeholder="Search by title, scripture, or topic...">
+                </div>
+              </div>
+              
+              <div class="speaker-filter-container">
+                <div class="filter-chips" id="sermon-speaker-chips">
+                  <!-- Injected dynamically -->
+                </div>
+              </div>
+              
+              <div id="sermon-list" class="sermon-list">
                 <!-- Injected dynamically -->
               </div>
             </div>
-            
-            <div id="sermon-list" class="sermon-list">
-              <!-- Injected dynamically -->
+
+            <!-- YOUTUBE STREAMS VIEW -->
+            <div id="sermons-video-view" class="sermon-view-panel hidden">
+              <!-- Live Broadcast Card -->
+              <div id="youtube-live-banner" class="youtube-live-banner hidden">
+                <!-- Injected dynamically when live -->
+              </div>
+              
+              <!-- Video Grid -->
+              <div id="youtube-video-grid" class="youtube-video-grid">
+                <!-- Injected dynamically -->
+              </div>
             </div>
           </div>
         </div>
@@ -482,6 +504,21 @@
           </svg>
           <span>Sign In with Google</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded Video Player Modal -->
+  <div id="video-modal" class="video-modal hidden">
+    <div class="video-modal-card double-bezel">
+      <div class="inner-core">
+        <div class="video-modal-header">
+          <h3 id="video-modal-title">Live Stream / Video</h3>
+          <button id="close-video-modal-btn" class="icon-btn small" title="Close Player"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="video-player-wrapper">
+          <iframe id="youtube-player-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
       </div>
     </div>
   </div>

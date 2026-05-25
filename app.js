@@ -1499,6 +1499,262 @@ async function renderRelatedSermons(bookName, chapter) {
   });
 }
 
+// 9.5 YouTube Stream & Livestream Integration
+let youtubeVideos = [];
+const YOUTUBE_CACHE_KEY = 'hope_youtube_cache';
+const YOUTUBE_LIVE_CACHE_KEY = 'hope_youtube_live';
+
+async function loadYouTubeStreams() {
+  const gridContainer = document.getElementById('youtube-video-grid');
+  if (!gridContainer) return;
+
+  // Try to load from localStorage cache first for instant speed
+  const cachedData = localStorage.getItem(YOUTUBE_CACHE_KEY);
+  const cacheTime = localStorage.getItem(YOUTUBE_CACHE_KEY + '_time');
+  const now = new Date().getTime();
+
+  if (cachedData && cacheTime && (now - parseInt(cacheTime) < 1000 * 60 * 15)) {
+    try {
+      youtubeVideos = JSON.parse(cachedData);
+      renderYouTubeStreams();
+      // Check live status in background
+      checkYouTubeLiveStatus();
+      return;
+    } catch (e) {
+      console.warn("Failed to parse cached YouTube videos, fetching fresh...", e);
+    }
+  }
+
+  // Show Skeleton Loader if no cached data
+  if (youtubeVideos.length === 0) {
+    gridContainer.innerHTML = `
+      <div class="skeleton-loader">
+        <div class="skeleton-line title"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+      </div>
+    `;
+  }
+
+  try {
+    const channelId = "UCnmL_D_pcY9o_pud_EFCApQ";
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}&v=${now}`;
+
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error("CORS Proxy error");
+    const json = await res.json();
+    
+    if (!json.contents) throw new Error("Empty proxy content");
+
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(json.contents, "text/xml");
+    const entries = xmlDoc.getElementsByTagName("entry");
+
+    const parsedVideos = [];
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const title = entry.getElementsByTagName("title")[0]?.textContent || "Untitled video";
+      const videoId = entry.getElementsByTagName("yt:videoId")[0]?.textContent || "";
+      const published = entry.getElementsByTagName("published")[0]?.textContent || "";
+      
+      if (videoId) {
+        parsedVideos.push({
+          title,
+          videoId,
+          publishedDate: published ? new Date(published).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          }) : ""
+        });
+      }
+    }
+
+    if (parsedVideos.length > 0) {
+      youtubeVideos = parsedVideos;
+      localStorage.setItem(YOUTUBE_CACHE_KEY, JSON.stringify(youtubeVideos));
+      localStorage.setItem(YOUTUBE_CACHE_KEY + '_time', now.toString());
+      renderYouTubeStreams();
+    } else {
+      throw new Error("No videos found in feed");
+    }
+  } catch (err) {
+    console.error("Error fetching YouTube feed", err);
+    // If offline or proxy fails, try to load any stale cache
+    if (cachedData) {
+      try {
+        youtubeVideos = JSON.parse(cachedData);
+        renderYouTubeStreams();
+      } catch (e) {}
+    } else {
+      gridContainer.innerHTML = `
+        <div class="error-box">
+          <i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>
+          <h3>Failed to load streams</h3>
+          <p>Please check your connection and try again.</p>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; font-family: monospace;">Details: ${err.message || err}</p>
+        </div>
+      `;
+    }
+  }
+
+  // Check live status
+  checkYouTubeLiveStatus();
+}
+
+function renderYouTubeStreams() {
+  const gridContainer = document.getElementById('youtube-video-grid');
+  if (!gridContainer) return;
+
+  gridContainer.innerHTML = youtubeVideos.map(video => `
+    <div class="youtube-video-card" data-id="${video.videoId}">
+      <div class="youtube-video-thumbnail">
+        <img src="https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg" alt="${video.title}" loading="lazy">
+      </div>
+      <div class="youtube-video-info">
+        <h3 class="youtube-video-title">${video.title}</h3>
+        <span class="youtube-video-date">
+          <i class="ph ph-calendar-blank"></i>
+          ${video.publishedDate}
+        </span>
+      </div>
+    </div>
+  `).join('');
+
+  gridContainer.querySelectorAll('.youtube-video-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const videoId = card.getAttribute('data-id');
+      const title = card.querySelector('.youtube-video-title').textContent;
+      openVideoPlayer(videoId, title);
+    });
+  });
+}
+
+async function checkYouTubeLiveStatus() {
+  const liveBanner = document.getElementById('youtube-live-banner');
+  if (!liveBanner) return;
+
+  const now = new Date().getTime();
+  const cachedLive = localStorage.getItem(YOUTUBE_LIVE_CACHE_KEY);
+  const cacheLiveTime = localStorage.getItem(YOUTUBE_LIVE_CACHE_KEY + '_time');
+
+  // Check live status cache (expires in 5 minutes)
+  if (cachedLive && cacheLiveTime && (now - parseInt(cacheLiveTime) < 1000 * 60 * 5)) {
+    try {
+      const data = JSON.parse(cachedLive);
+      if (data.isLive && data.videoId) {
+        showLiveBanner(data.videoId, data.title);
+      } else {
+        liveBanner.classList.add('hidden');
+      }
+      return;
+    } catch (e) {}
+  }
+
+  try {
+    const liveUrl = 'https://www.youtube.com/@HopeBaptistToledo/live';
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(liveUrl)}&v=${now}`;
+
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error("CORS Proxy error checking live status");
+    const json = await res.json();
+    
+    if (!json.contents) return;
+
+    const html = json.contents;
+    
+    // Check if the stream is actually live. YouTube puts "isLive":true in the player JSON when live.
+    const isLive = html.includes('"isLive":true') || (html.includes('/live/') && !html.includes('LIVE_STREAM_OFFLINE'));
+    
+    let liveVideoId = "";
+    let liveTitle = "Sunday Service Live Stream";
+
+    if (isLive) {
+      // Extract video ID from canonical link or json metadata
+      const watchMatch = html.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
+      const canonicalMatch = html.match(/<link rel="canonical" href="https:\/\/www.youtube.com\/watch\?v=([a-zA-Z0-9_-]{11})"/);
+      
+      if (watchMatch) {
+        liveVideoId = watchMatch[1];
+      } else if (canonicalMatch) {
+        liveVideoId = canonicalMatch[1];
+      }
+
+      // Extract title of the live stream if possible
+      const titleMatch = html.match(/"title":{"runs":\[{"text":"([^"]+)"/);
+      if (titleMatch) {
+        liveTitle = titleMatch[1];
+      }
+    }
+
+    if (isLive && liveVideoId) {
+      const liveData = { isLive: true, videoId: liveVideoId, title: liveTitle };
+      localStorage.setItem(YOUTUBE_LIVE_CACHE_KEY, JSON.stringify(liveData));
+      localStorage.setItem(YOUTUBE_LIVE_CACHE_KEY + '_time', now.toString());
+      showLiveBanner(liveVideoId, liveTitle);
+    } else {
+      const liveData = { isLive: false, videoId: null, title: "" };
+      localStorage.setItem(YOUTUBE_LIVE_CACHE_KEY, JSON.stringify(liveData));
+      localStorage.setItem(YOUTUBE_LIVE_CACHE_KEY + '_time', now.toString());
+      liveBanner.classList.add('hidden');
+    }
+  } catch (err) {
+    console.warn("Failed to check live status:", err);
+  }
+}
+
+function showLiveBanner(videoId, title) {
+  const liveBanner = document.getElementById('youtube-live-banner');
+  if (!liveBanner) return;
+
+  liveBanner.innerHTML = `
+    <div class="live-badge">
+      <span class="live-dot"></span> Live
+    </div>
+    <div class="live-info-wrapper">
+      <div class="live-channel-name">Hope Baptist Toledo</div>
+      <h3 class="live-title">${title}</h3>
+    </div>
+    <div class="live-watch-btn" title="Watch Live Stream">
+      <i class="ph ph-play"></i>
+    </div>
+  `;
+  liveBanner.classList.remove('hidden');
+
+  // Remove old event listener by cloning node
+  const newBanner = liveBanner.cloneNode(true);
+  liveBanner.parentNode.replaceChild(newBanner, liveBanner);
+
+  newBanner.addEventListener('click', () => {
+    openVideoPlayer(videoId, title);
+  });
+}
+
+function openVideoPlayer(videoId, title) {
+  const modal = document.getElementById('video-modal');
+  const iframe = document.getElementById('youtube-player-iframe');
+  const modalTitle = document.getElementById('video-modal-title');
+
+  if (!modal || !iframe) return;
+
+  modalTitle.textContent = title;
+  iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+  modal.classList.remove('hidden');
+  document.body.classList.add('reader-expanded');
+}
+
+function closeVideoPlayer() {
+  const modal = document.getElementById('video-modal');
+  const iframe = document.getElementById('youtube-player-iframe');
+
+  if (!modal || !iframe) return;
+
+  iframe.src = "";
+  modal.classList.add('hidden');
+  document.body.classList.remove('reader-expanded');
+}
+
 // 10. Core Setup & Global Listeners
 document.addEventListener('DOMContentLoaded', () => {
   // Load State
@@ -1765,6 +2021,44 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', (e) => {
       sermonSearchQuery = e.target.value.toLowerCase().trim();
       renderSermonsList();
+    });
+  }
+
+  // YouTube Tab Switching
+  const tabAudio = document.getElementById('sermon-tab-audio');
+  const tabVideo = document.getElementById('sermon-tab-video');
+  const viewAudio = document.getElementById('sermons-audio-view');
+  const viewVideo = document.getElementById('sermons-video-view');
+
+  if (tabAudio && tabVideo && viewAudio && viewVideo) {
+    tabAudio.addEventListener('click', () => {
+      tabAudio.classList.add('active');
+      tabVideo.classList.remove('active');
+      viewAudio.classList.remove('hidden');
+      viewVideo.classList.add('hidden');
+    });
+
+    tabVideo.addEventListener('click', () => {
+      tabVideo.classList.add('active');
+      tabAudio.classList.remove('active');
+      viewVideo.classList.remove('hidden');
+      viewAudio.classList.add('hidden');
+      loadYouTubeStreams();
+    });
+  }
+
+  // Close Video Player Modal
+  const closeVideoBtn = document.getElementById('close-video-modal-btn');
+  if (closeVideoBtn) {
+    closeVideoBtn.addEventListener('click', closeVideoPlayer);
+  }
+
+  const videoModal = document.getElementById('video-modal');
+  if (videoModal) {
+    videoModal.addEventListener('click', (e) => {
+      if (!e.target.closest('.video-modal-card')) {
+        closeVideoPlayer();
+      }
     });
   }
 

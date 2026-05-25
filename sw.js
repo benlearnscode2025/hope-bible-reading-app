@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v24';
+const CACHE_NAME = 'hope-toledo-bible-cache-v25';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -86,13 +86,14 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request.url).then((cachedResponse) => {
       const fetchPromise = fetch(event.request.url).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
+        if (networkResponse && (networkResponse.status === 200 || (networkResponse.status === 0 && event.request.url.includes('img.youtube.com')))) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             if (event.request.url.startsWith(self.location.origin) || 
                 event.request.url.includes('googleapis') || 
                 event.request.url.includes('gstatic') || 
-                event.request.url.includes('unpkg')) {
+                event.request.url.includes('unpkg') ||
+                event.request.url.includes('img.youtube.com')) {
               cache.put(event.request.url, responseClone);
             }
           });
