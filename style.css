@@ -2439,20 +2439,25 @@ body.distraction-free .reader-meta-bar {
 }
 
 /* Physical Bible Companion View */
-.physical-bible-card {
-  margin-top: 16px;
-  margin-bottom: 24px;
-  animation: screenFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.physical-bible-card .inner-core {
+.scripture-card.physical-mode .inner-core {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  min-height: 280px;
   padding: 48px 24px;
-  min-height: 240px;
+  overflow: hidden; /* Prevent scrollbar since it's short template text */
+}
+
+.physical-bible-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: screenFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  width: 100%;
 }
 
 .physical-icon-wrapper {
@@ -2469,7 +2474,7 @@ body.distraction-free .reader-meta-bar {
   box-shadow: 0 4px 12px var(--color-accent-glow);
 }
 
-.physical-bible-card h3 {
+.physical-bible-content h3 {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
@@ -2477,20 +2482,22 @@ body.distraction-free .reader-meta-bar {
   margin-bottom: 8px;
 }
 
-.physical-bible-card p {
+.physical-bible-content p {
   font-size: 0.95rem;
   color: var(--text-secondary);
   line-height: 1.5;
   max-width: 320px;
+  margin: 0 auto;
 }
 
-.physical-bible-card .highlight-ref {
+.physical-bible-content .highlight-ref {
   color: var(--color-accent);
   font-weight: 700;
   font-size: 1.05rem;
+  margin: 4px 0;
 }
 
-.physical-bible-card .desc-text {
+.physical-bible-content .desc-text {
   font-size: 0.8rem;
   margin-top: 12px;
   font-style: italic;

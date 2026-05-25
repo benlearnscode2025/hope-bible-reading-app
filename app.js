@@ -409,6 +409,7 @@ async function loadActiveChapter() {
   const container = document.getElementById('scripture-container');
   if (!container) return;
 
+  const scriptureCard = document.querySelector('.scripture-card');
   const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
   const chapter = state.currentChapter;
   
@@ -431,17 +432,16 @@ async function loadActiveChapter() {
 
   // If in Physical Bible Mode, show companion screen card instead
   if (state.isPhysicalMode) {
+    if (scriptureCard) scriptureCard.classList.add('physical-mode');
     container.innerHTML = `
-      <div class="physical-bible-card double-bezel">
-        <div class="inner-core">
-          <div class="physical-icon-wrapper">
-            <i class="ph-fill ph-book-bookmark"></i>
-          </div>
-          <h3>Physical Bible Mode</h3>
-          <p>Please open your physical copy of God's Word to</p>
-          <p class="highlight-ref">${bookName} Chapter ${chapter}</p>
-          <p class="desc-text">Read carefully and reflect on the text. Tap the button below when you are finished to take your daily quiz.</p>
+      <div class="physical-bible-content">
+        <div class="physical-icon-wrapper">
+          <i class="ph-fill ph-book-bookmark"></i>
         </div>
+        <h3>Physical Bible Mode</h3>
+        <p>Please open your physical copy of God's Word to</p>
+        <p class="highlight-ref">${bookName} Chapter ${chapter}</p>
+        <p class="desc-text">Read carefully and reflect on the text. Tap the button below when you are finished to take your daily quiz.</p>
       </div>
     `;
     
@@ -454,6 +454,8 @@ async function loadActiveChapter() {
     isChapterReadCompleted = true;
     return;
   }
+
+  if (scriptureCard) scriptureCard.classList.remove('physical-mode');
 
   // Show Skeleton Loader
   container.innerHTML = `
