@@ -1509,7 +1509,23 @@ async function fetchWithFallbackProxies(targetUrl) {
   const now = new Date().getTime();
   const cacheBuster = `&v=${now}`;
   
-  const proxyAttempts = [
+  const proxyAttempts = [];
+
+  // If fetching an RSS/Atom XML feed, attempt rss2json converter first (very fast & reliable)
+  if (targetUrl.includes('feeds/videos.xml') || targetUrl.includes('.xml')) {
+    proxyAttempts.push({
+      name: 'RSS2JSON API',
+      url: `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`,
+      parse: async (res) => {
+        const text = await res.text();
+        if (!text || !text.includes('"status":"ok"')) throw new Error("Invalid rss2json response");
+        return text;
+      }
+    });
+  }
+
+  // Add standard CORS proxies
+  proxyAttempts.push(
     // 1. AllOrigins JSON wrapper
     {
       name: 'AllOrigins JSON',
@@ -1550,7 +1566,7 @@ async function fetchWithFallbackProxies(targetUrl) {
         return text;
       }
     }
-  ];
+  );
 
   let lastError = null;
   for (const proxy of proxyAttempts) {
@@ -1605,29 +1621,57 @@ async function loadYouTubeStreams() {
     const channelId = "UCnmL_D_pcY9o_pud_EFCApQ";
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
     
-    const xmlContent = await fetchWithFallbackProxies(feedUrl);
+    const rawContent = await fetchWithFallbackProxies(feedUrl);
 
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
-    const entries = xmlDoc.getElementsByTagName("entry");
+    let parsedVideos = [];
 
-    const parsedVideos = [];
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i];
-      const title = entry.getElementsByTagName("title")[0]?.textContent || "Untitled video";
-      const videoId = entry.getElementsByTagName("yt:videoId")[0]?.textContent || "";
-      const published = entry.getElementsByTagName("published")[0]?.textContent || "";
-      
-      if (videoId) {
-        parsedVideos.push({
-          title,
-          videoId,
-          publishedDate: published ? new Date(published).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          }) : ""
-        });
+    // Detect JSON response (e.g. from rss2json)
+    if (rawContent.trim().startsWith('{')) {
+      const data = JSON.parse(rawContent);
+      if (data.status === 'ok' && data.items) {
+        parsedVideos = data.items.map(item => {
+          let videoId = "";
+          if (item.guid && item.guid.includes('yt:video:')) {
+            videoId = item.guid.split(':').pop();
+          } else if (item.link) {
+            const match = item.link.match(/[?&]v=([^&#]+)/);
+            if (match) videoId = match[1];
+          }
+          
+          return {
+            title: item.title || "Untitled video",
+            videoId: videoId,
+            publishedDate: item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            }) : ""
+          };
+        }).filter(v => v.videoId);
+      }
+    } else {
+      // Parse as XML Atom feed
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(rawContent, "text/xml");
+      const entries = xmlDoc.getElementsByTagName("entry");
+
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        const title = entry.getElementsByTagName("title")[0]?.textContent || "Untitled video";
+        const videoId = entry.getElementsByTagName("yt:videoId")[0]?.textContent || "";
+        const published = entry.getElementsByTagName("published")[0]?.textContent || "";
+        
+        if (videoId) {
+          parsedVideos.push({
+            title,
+            videoId,
+            publishedDate: published ? new Date(published).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            }) : ""
+          });
+        }
       }
     }
 
@@ -1653,7 +1697,7 @@ async function loadYouTubeStreams() {
           <i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>
           <h3>Failed to load streams</h3>
           <p>Please check your connection and try again.</p>
-          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; font-family: monospace;">Details: ${err.message || err}</p>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; font-family: monospace;">Details: ${err.message || err} (App v25.2)</p>
         </div>
       `;
     }
