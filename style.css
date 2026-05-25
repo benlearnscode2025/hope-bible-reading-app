@@ -2014,7 +2014,7 @@ input:checked + .slider:before {
     max-width: 1100px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 240px minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     gap: 24px 40px;
     padding: 32px 24px;
@@ -2129,6 +2129,7 @@ input:checked + .slider:before {
     grid-column: 2;
     grid-row: 2;
     padding-bottom: 0 !important;
+    min-width: 0;
   }
 
   /* Float Player in Bottom-Right Corner on Desktop */
@@ -2146,7 +2147,7 @@ input:checked + .slider:before {
 
   /* Stats Bento Grid optimization */
   .stats-grid {
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 260px minmax(0, 1fr);
     grid-template-rows: auto auto;
     gap: 24px;
   }
