@@ -215,6 +215,30 @@ let currentScreen = 'reader';
 // Local storage key name
 const STORAGE_KEY = 'hope_toledo_bible_tracker_state';
 
+// Scripture Cache (In-Memory & localStorage)
+const SCRIPTURE_CACHE_KEY = 'hope_scripture_cache';
+let scriptureCache = {};
+
+try {
+  scriptureCache = JSON.parse(localStorage.getItem(SCRIPTURE_CACHE_KEY) || '{}');
+} catch (e) {
+  console.error("Failed to load scripture cache from localStorage:", e);
+  scriptureCache = {};
+}
+
+function pruneScriptureCache() {
+  const keys = Object.keys(scriptureCache);
+  if (keys.length > 80) {
+    const keysToDelete = keys.slice(0, 20);
+    keysToDelete.forEach(k => delete scriptureCache[k]);
+    try {
+      localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+    } catch (e) {
+      console.error("Failed to save pruned scripture cache:", e);
+    }
+  }
+}
+
 // Load state from local storage
 function loadState() {
   const savedState = localStorage.getItem(STORAGE_KEY);
@@ -322,6 +346,11 @@ let activeChapterText = "";
 let isChapterReadCompleted = false;
 
 async function fetchBibleText(book, chapter, translation) {
+  const cacheKey = `${translation}_${book}_${chapter}`.toLowerCase();
+  if (scriptureCache[cacheKey]) {
+    return scriptureCache[cacheKey];
+  }
+
   // Setup standard book name formatting for API
   const formattedBook = encodeURIComponent(book);
   const url = `https://bible-api.com/${formattedBook}+${chapter}?translation=${translation}`;
@@ -330,10 +359,49 @@ async function fetchBibleText(book, chapter, translation) {
     const res = await fetch(url);
     if (!res.ok) throw new Error("Network response was not ok");
     const data = await res.json();
+    
+    // Save to cache
+    scriptureCache[cacheKey] = data;
+    pruneScriptureCache();
+    try {
+      localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        scriptureCache = {};
+        scriptureCache[cacheKey] = data;
+        try {
+          localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+        } catch (innerErr) {
+          console.error("Failed to save scripture cache even after clearing:", innerErr);
+        }
+      }
+    }
+    
     return data;
   } catch (err) {
     console.error("Error fetching Bible text", err);
     throw err;
+  }
+}
+
+// Pre-fetch the next chapter in the background to make the reading flow instant
+function prefetchNextChapter() {
+  const currentBook = BIBLE_BOOKS[state.currentBookIndex];
+  let nextBookIndex = state.currentBookIndex;
+  let nextChapter = state.currentChapter + 1;
+
+  if (nextChapter > currentBook.chapters) {
+    nextBookIndex = state.currentBookIndex + 1;
+    nextChapter = 1;
+  }
+
+  // Check if we haven't reached the end of the Bible (Revelation 22)
+  if (nextBookIndex < BIBLE_BOOKS.length) {
+    const nextBookName = BIBLE_BOOKS[nextBookIndex].name;
+    // Prefetch in background without blocking
+    fetchBibleText(nextBookName, nextChapter, state.translation).catch(err => {
+      console.warn("Failed to prefetch next chapter:", err);
+    });
   }
 }
 
@@ -426,6 +494,9 @@ async function loadActiveChapter() {
 
     // Render related sermons
     await renderRelatedSermons(bookName, chapter);
+
+    // Trigger pre-fetch of next chapter in background
+    prefetchNextChapter();
 
     // Enable complete button after a brief timeout (simulating reading check or scroll check)
     // Here we listen to scroll triggers or let the user click after 2 seconds
