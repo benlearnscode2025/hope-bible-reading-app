@@ -2612,3 +2612,16 @@ body.reader-expanded {
   }
 }
 
+/* 
+  Containing Block Fix:
+  When the scripture card is expanded or collapsing, we must disable transforms/animations 
+  on the parent active screen container (.screen.active). If we don't, the browser treats 
+  the parent as the containing block for position: fixed elements, off-centering the reader.
+*/
+body.reader-expanded .screen.active,
+.screen.active:has(.scripture-card.expanded),
+.screen.active:has(.scripture-card.collapsing) {
+  transform: none !important;
+  animation: none !important;
+}
+
