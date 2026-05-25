@@ -2813,7 +2813,7 @@ body.reader-expanded .screen.active,
 }
 
 .play-btn-circle i {
-  margin-left: 3px;
+  margin-left: 1.5px;
   transition: transform 0.3s ease;
 }
 
