@@ -1504,7 +1504,7 @@ let youtubeVideos = [];
 const YOUTUBE_CACHE_KEY = 'hope_youtube_cache';
 const YOUTUBE_LIVE_CACHE_KEY = 'hope_youtube_live';
 
-// Helper to fetch content through multiple public CORS proxies as fallbacks
+// Helper to fetch content through multiple public CORS proxies concurrently
 async function fetchWithFallbackProxies(targetUrl) {
   const now = new Date().getTime();
   const cacheBuster = `&v=${now}`;
@@ -1536,17 +1536,7 @@ async function fetchWithFallbackProxies(targetUrl) {
         return json.contents;
       }
     },
-    // 2. AllOrigins raw endpoint (returns raw text directly)
-    {
-      name: 'AllOrigins Raw',
-      url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-      parse: async (res) => {
-        const text = await res.text();
-        if (!text) throw new Error("Empty AllOrigins raw content");
-        return text;
-      }
-    },
-    // 3. CodeTabs proxy (returns raw text directly)
+    // 2. CodeTabs proxy (returns raw text directly)
     {
       name: 'CodeTabs Proxy',
       url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
@@ -1555,34 +1545,35 @@ async function fetchWithFallbackProxies(targetUrl) {
         if (!text) throw new Error("Empty CodeTabs content");
         return text;
       }
-    },
-    // 4. Direct fetch as final fallback
-    {
-      name: 'Direct Fetch',
-      url: targetUrl,
-      parse: async (res) => {
-        const text = await res.text();
-        if (!text) throw new Error("Empty direct content");
-        return text;
-      }
     }
   );
 
-  let lastError = null;
-  for (const proxy of proxyAttempts) {
+  const fetchWithTimeout = async (proxy, timeoutMs = 8000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
     try {
       console.log(`Attempting fetch via ${proxy.name}: ${proxy.url.substring(0, 80)}...`);
-      const res = await fetch(proxy.url);
+      const res = await fetch(proxy.url, { signal: controller.signal });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const content = await proxy.parse(res);
+      clearTimeout(id);
       console.log(`Successfully fetched using proxy: ${proxy.name}`);
       return content;
     } catch (err) {
+      clearTimeout(id);
       console.warn(`Proxy ${proxy.name} failed:`, err);
-      lastError = err;
+      throw err;
     }
+  };
+
+  try {
+    // Race all proxies! The first one to resolve successfully wins.
+    const content = await Promise.any(proxyAttempts.map(p => fetchWithTimeout(p)));
+    return content;
+  } catch (aggregateError) {
+    console.error("All proxies failed to fetch:", aggregateError);
+    throw new Error("All proxies failed to fetch");
   }
-  throw lastError || new Error("All proxies failed to fetch");
 }
 
 async function loadYouTubeStreams() {
