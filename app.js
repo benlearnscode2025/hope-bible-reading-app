@@ -1504,6 +1504,71 @@ let youtubeVideos = [];
 const YOUTUBE_CACHE_KEY = 'hope_youtube_cache';
 const YOUTUBE_LIVE_CACHE_KEY = 'hope_youtube_live';
 
+// Helper to fetch content through multiple public CORS proxies as fallbacks
+async function fetchWithFallbackProxies(targetUrl) {
+  const now = new Date().getTime();
+  const cacheBuster = `&v=${now}`;
+  
+  const proxyAttempts = [
+    // 1. AllOrigins JSON wrapper
+    {
+      name: 'AllOrigins JSON',
+      url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}${cacheBuster}`,
+      parse: async (res) => {
+        const json = await res.json();
+        if (!json.contents) throw new Error("Empty AllOrigins content");
+        return json.contents;
+      }
+    },
+    // 2. AllOrigins raw endpoint (returns raw text directly)
+    {
+      name: 'AllOrigins Raw',
+      url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+      parse: async (res) => {
+        const text = await res.text();
+        if (!text) throw new Error("Empty AllOrigins raw content");
+        return text;
+      }
+    },
+    // 3. CodeTabs proxy (returns raw text directly)
+    {
+      name: 'CodeTabs Proxy',
+      url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+      parse: async (res) => {
+        const text = await res.text();
+        if (!text) throw new Error("Empty CodeTabs content");
+        return text;
+      }
+    },
+    // 4. Direct fetch as final fallback
+    {
+      name: 'Direct Fetch',
+      url: targetUrl,
+      parse: async (res) => {
+        const text = await res.text();
+        if (!text) throw new Error("Empty direct content");
+        return text;
+      }
+    }
+  ];
+
+  let lastError = null;
+  for (const proxy of proxyAttempts) {
+    try {
+      console.log(`Attempting fetch via ${proxy.name}: ${proxy.url.substring(0, 80)}...`);
+      const res = await fetch(proxy.url);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const content = await proxy.parse(res);
+      console.log(`Successfully fetched using proxy: ${proxy.name}`);
+      return content;
+    } catch (err) {
+      console.warn(`Proxy ${proxy.name} failed:`, err);
+      lastError = err;
+    }
+  }
+  throw lastError || new Error("All proxies failed to fetch");
+}
+
 async function loadYouTubeStreams() {
   const gridContainer = document.getElementById('youtube-video-grid');
   if (!gridContainer) return;
@@ -1539,16 +1604,11 @@ async function loadYouTubeStreams() {
   try {
     const channelId = "UCnmL_D_pcY9o_pud_EFCApQ";
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}&v=${now}`;
-
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error("CORS Proxy error");
-    const json = await res.json();
     
-    if (!json.contents) throw new Error("Empty proxy content");
+    const xmlContent = await fetchWithFallbackProxies(feedUrl);
 
     const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(json.contents, "text/xml");
+    const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
     const entries = xmlDoc.getElementsByTagName("entry");
 
     const parsedVideos = [];
@@ -1654,15 +1714,7 @@ async function checkYouTubeLiveStatus() {
 
   try {
     const liveUrl = 'https://www.youtube.com/@HopeBaptistToledo/live';
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(liveUrl)}&v=${now}`;
-
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error("CORS Proxy error checking live status");
-    const json = await res.json();
-    
-    if (!json.contents) return;
-
-    const html = json.contents;
+    const html = await fetchWithFallbackProxies(liveUrl);
     
     // Check if the stream is actually live. YouTube puts "isLive":true in the player JSON when live.
     const isLive = html.includes('"isLive":true') || (html.includes('/live/') && !html.includes('LIVE_STREAM_OFFLINE'));
