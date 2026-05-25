@@ -801,67 +801,160 @@ function renderBooksGrid() {
 
 // Modal/Dialog to pick chapters inside a book
 function showBookChaptersDialog(bookIndex) {
-  const book = BIBLE_BOOKS[bookIndex];
-  const completedList = state.completedChapters[book.name] || [];
-  
-  // Create simple floating dialog overlay
+  showPassageSelectorDialog(bookIndex);
+}
+
+// Unified Passage Selector Dialog (handles Book list and Chapter grids)
+function showPassageSelectorDialog(initialBookIndex) {
+  // Create overlay
   const overlay = document.createElement('div');
   overlay.className = 'overlay-dialog';
   
-  let chaptersHtml = '';
-  for (let c = 1; c <= book.chapters; c++) {
-    const isRead = completedList.includes(c);
-    const isCurrent = state.currentBookIndex === bookIndex && state.currentChapter === c;
-    
-    chaptersHtml += `
-      <button class="chapter-select-btn ${isRead ? 'read' : ''} ${isCurrent ? 'current' : ''}" data-chapter="${c}">
-        ${c}
-      </button>
-    `;
-  }
+  // State for the dialog
+  let currentView = initialBookIndex !== undefined ? 'chapters' : 'books';
+  let selectedBookIndex = initialBookIndex !== undefined ? initialBookIndex : state.currentBookIndex;
+  let activeTestament = BIBLE_BOOKS[selectedBookIndex].testament;
   
-  overlay.innerHTML = `
-    <div class="dialog-content double-bezel" style="max-width: 440px; margin: 80px auto 20px auto;">
-      <div class="inner-core">
+  const renderDialogContent = () => {
+    const innerCore = overlay.querySelector('.inner-core');
+    if (!innerCore) return;
+    
+    if (currentView === 'books') {
+      // Render book list view
+      let booksHtml = '';
+      BIBLE_BOOKS.forEach((book, idx) => {
+        if (book.testament !== activeTestament) return;
+        const completedList = state.completedChapters[book.name] || [];
+        const isCompleted = completedList.length === book.chapters;
+        const isStarted = completedList.length > 0;
+        const isCurrent = state.currentBookIndex === idx;
+        
+        let statusClass = '';
+        if (isCurrent) statusClass = 'current';
+        else if (isCompleted) statusClass = 'completed';
+        else if (isStarted) statusClass = 'started';
+        
+        booksHtml += `
+          <button class="dialog-book-pill ${statusClass}" data-index="${idx}">
+            <span class="book-name">${book.name}</span>
+            <span class="book-progress-tag">${completedList.length}/${book.chapters}</span>
+          </button>
+        `;
+      });
+      
+      innerCore.innerHTML = `
         <div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-          <h3 class="dialog-title" style="font-family:'Lora',serif; font-size:1.3rem; color:var(--color-accent);">${book.name} Chapters</h3>
+          <h3 class="dialog-title" style="font-family:'Lora',serif; font-size:1.3rem; color:var(--color-accent);">Select Passage</h3>
           <button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>
         </div>
-        <div class="chapters-grid" style="display:grid; grid-template-cols:repeat(6,1fr); gap:8px; max-height:300px; overflow-y:auto; padding:4px;">
+        
+        <div class="dialog-testament-selector" style="display:flex; gap:8px; margin-bottom:16px;">
+          <button id="btn-dialog-ot" class="filter-chip ${activeTestament === 'OT' ? 'active' : ''}" style="flex:1;">Old Testament</button>
+          <button id="btn-dialog-nt" class="filter-chip ${activeTestament === 'NT' ? 'active' : ''}" style="flex:1;">New Testament</button>
+        </div>
+        
+        <div class="dialog-books-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; max-height:320px; overflow-y:auto; padding:4px;">
+          ${booksHtml}
+        </div>
+      `;
+      
+      // Event listeners for book selection
+      innerCore.querySelectorAll('.dialog-book-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          selectedBookIndex = parseInt(pill.getAttribute('data-index'));
+          currentView = 'chapters';
+          renderDialogContent();
+        });
+      });
+      
+      // Close button
+      innerCore.querySelector('#close-dialog-btn').addEventListener('click', () => overlay.remove());
+      
+      // Testament toggles
+      innerCore.querySelector('#btn-dialog-ot').addEventListener('click', () => {
+        activeTestament = 'OT';
+        renderDialogContent();
+      });
+      innerCore.querySelector('#btn-dialog-nt').addEventListener('click', () => {
+        activeTestament = 'NT';
+        renderDialogContent();
+      });
+      
+    } else {
+      // Render chapter list view
+      const book = BIBLE_BOOKS[selectedBookIndex];
+      const completedList = state.completedChapters[book.name] || [];
+      
+      let chaptersHtml = '';
+      for (let c = 1; c <= book.chapters; c++) {
+        const isRead = completedList.includes(c);
+        const isCurrent = state.currentBookIndex === selectedBookIndex && state.currentChapter === c;
+        
+        chaptersHtml += `
+          <button class="chapter-select-btn ${isRead ? 'read' : ''} ${isCurrent ? 'current' : ''}" data-chapter="${c}">
+            ${c}
+          </button>
+        `;
+      }
+      
+      innerCore.innerHTML = `
+        <div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+          <button id="back-to-books-btn" class="text-btn" style="background:none; border:none; color:var(--color-accent); font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit; font-size:0.95rem;">
+            <i class="ph ph-caret-left"></i> Books
+          </button>
+          <h3 class="dialog-title" style="font-family:'Lora',serif; font-size:1.2rem; color:var(--color-accent);">${book.name}</h3>
+          <button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>
+        </div>
+        
+        <div class="chapters-grid" style="display:grid; grid-template-columns:repeat(6, 1fr) !important; gap:8px; max-height:300px; overflow-y:auto; padding:4px;">
           ${chaptersHtml}
         </div>
+        
         <p style="font-size:0.75rem; color:var(--text-secondary); text-align:center; margin-top:16px;">
-          Tap any chapter to set it as your active reading path.
+          Select a chapter to start reading.
         </p>
+      `;
+      
+      // Back button
+      innerCore.querySelector('#back-to-books-btn').addEventListener('click', () => {
+        currentView = 'books';
+        renderDialogContent();
+      });
+      
+      // Close button
+      innerCore.querySelector('#close-dialog-btn').addEventListener('click', () => overlay.remove());
+      
+      // Chapter selection
+      innerCore.querySelectorAll('.chapter-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const chNum = parseInt(btn.getAttribute('data-chapter'));
+          state.currentBookIndex = selectedBookIndex;
+          state.currentChapter = chNum;
+          saveState();
+          
+          overlay.remove();
+          loadActiveChapter();
+          navigateTo('reader');
+          showToast(`Active Chapter set to ${book.name} ${chNum}`, "book-open");
+        });
+      });
+    }
+  };
+  
+  overlay.innerHTML = `
+    <div class="dialog-content double-bezel" style="max-width: 440px; margin: 0 auto;">
+      <div class="inner-core">
+        <!-- Injected dynamically -->
       </div>
     </div>
   `;
   
   document.body.appendChild(overlay);
+  renderDialogContent();
   
-  // Add event listener to close popup
-  document.getElementById('close-dialog-btn').addEventListener('click', () => {
-    overlay.remove();
-  });
-  
+  // Close on backdrop click
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.remove();
-  });
-
-  // Chapter buttons listener
-  const chBtns = overlay.querySelectorAll('.chapter-select-btn');
-  chBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const chNum = parseInt(btn.getAttribute('data-chapter'));
-      
-      state.currentBookIndex = bookIndex;
-      state.currentChapter = chNum;
-      saveState();
-      
-      overlay.remove();
-      navigateTo('reader');
-      showToast(`Active Chapter set to ${book.name} ${chNum}`, "book-open");
-    });
   });
 }
 
@@ -2008,6 +2101,14 @@ document.addEventListener('DOMContentLoaded', () => {
       saveState();
       updatePhysicalBtnUI();
       loadActiveChapter(); // Re-render reader view
+    });
+  }
+
+  // PASSAGE SELECTOR TRIGGER ON READER HEADER
+  const chapterInfoEl = document.getElementById('current-chapter-info');
+  if (chapterInfoEl) {
+    chapterInfoEl.addEventListener('click', () => {
+      showPassageSelectorDialog();
     });
   }
 
