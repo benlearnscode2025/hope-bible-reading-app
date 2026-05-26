@@ -355,8 +355,12 @@ async function fetchBibleText(book, chapter, translation) {
   const formattedBook = encodeURIComponent(book);
   const url = `https://bible-api.com/${formattedBook}+${chapter}?translation=${translation}`;
   
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (!res.ok) throw new Error("Network response was not ok");
     const data = await res.json();
     
@@ -379,6 +383,7 @@ async function fetchBibleText(book, chapter, translation) {
     
     return data;
   } catch (err) {
+    clearTimeout(timeoutId);
     console.error("Error fetching Bible text", err);
     throw err;
   }
