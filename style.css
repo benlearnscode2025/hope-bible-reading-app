@@ -981,8 +981,8 @@ body.has-player .app-main {
   font-size: 0.7rem;
   line-height: 1.15;
   white-space: normal;
-  word-break: normal;
-  overflow-wrap: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
   max-width: 100%;
   padding: 0 2px;
 }
@@ -3031,6 +3031,8 @@ body.reader-expanded .screen.active,
   margin-left: -12px;
   border-radius: var(--radius-inner);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: max-content;
+  flex-shrink: 0;
 }
 
 .current-chapter-info:hover {
@@ -3070,8 +3072,8 @@ body.reader-expanded .screen.active,
   color: var(--text-primary);
   line-height: 1.15;
   white-space: normal;
-  word-break: normal;
-  overflow-wrap: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
   max-width: 100%;
   padding: 0 2px;
 }
