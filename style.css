@@ -981,7 +981,8 @@ body.has-player .app-main {
   font-size: 0.7rem;
   line-height: 1.15;
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
   max-width: 100%;
   padding: 0 2px;
 }
@@ -3069,7 +3070,8 @@ body.reader-expanded .screen.active,
   color: var(--text-primary);
   line-height: 1.15;
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
   max-width: 100%;
   padding: 0 2px;
 }
