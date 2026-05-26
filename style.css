@@ -3108,14 +3108,26 @@ body.reader-expanded .screen.active,
   background: rgba(28, 72, 45, 0.04);
 }
 
+/* Dialog Books Grid */
+.dialog-books-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Chapter Grid & Buttons */
 .chapters-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr) !important;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
   gap: 8px;
   max-height: 280px;
   overflow-y: auto;
   padding: 4px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chapter-select-btn {
@@ -3218,7 +3230,7 @@ body.reader-expanded .screen.active,
   }
 
   .scripture-card {
-    height: 100%;
+    flex-grow: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -3310,5 +3322,9 @@ body.reader-expanded .screen.active,
     flex-grow: 1;
     overflow-y: auto !important;
     max-height: none !important;
+  }
+  
+  .dialog-books-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }

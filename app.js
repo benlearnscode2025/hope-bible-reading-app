@@ -860,7 +860,7 @@ function showPassageSelectorDialog(initialBookIndex) {
           <button id="btn-dialog-nt" class="filter-chip ${activeTestament === 'NT' ? 'active' : ''}" style="flex:1;">New Testament</button>
         </div>
         
-        <div class="dialog-books-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; max-height:320px; overflow-y:auto; padding:4px;">
+        <div class="dialog-books-grid">
           ${booksHtml}
         </div>
       `;
@@ -913,7 +913,7 @@ function showPassageSelectorDialog(initialBookIndex) {
           <button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>
         </div>
         
-        <div class="chapters-grid" style="display:grid; grid-template-columns:repeat(6, 1fr) !important; gap:8px; max-height:300px; overflow-y:auto; padding:4px;">
+        <div class="chapters-grid">
           ${chaptersHtml}
         </div>
         
