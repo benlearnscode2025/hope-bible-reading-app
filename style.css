@@ -962,11 +962,10 @@ body.has-player .app-main {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 10px 4px;
+  padding: 8px 4px;
   background: var(--bg-primary);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
@@ -974,13 +973,17 @@ body.has-player .app-main {
   position: relative;
   overflow: hidden;
   gap: 2px;
+  min-height: 52px;
+  box-sizing: border-box;
 }
 
 .book-pill .book-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  white-space: normal;
+  word-break: break-word;
   max-width: 100%;
+  padding: 0 2px;
 }
 
 .book-pill:hover {
@@ -3043,7 +3046,7 @@ body.reader-expanded .screen.active,
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 10px 8px;
+  padding: 8px 4px;
   background: var(--bg-primary);
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -3051,6 +3054,8 @@ body.reader-expanded .screen.active,
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   font-weight: 600;
+  min-height: 52px;
+  box-sizing: border-box;
 }
 
 .dialog-book-pill:hover {
@@ -3060,12 +3065,13 @@ body.reader-expanded .screen.active,
 }
 
 .dialog-book-pill .book-name {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.15;
+  white-space: normal;
+  word-break: break-word;
   max-width: 100%;
+  padding: 0 2px;
 }
 
 .dialog-book-pill:hover .book-name {
