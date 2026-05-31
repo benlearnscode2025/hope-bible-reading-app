@@ -220,8 +220,6 @@ let scripturePlaybackSpeed = 1.0;
 let isScriptureSeeking = false;
 let currentVerseWeights = [];
 let totalVerseLength = 0;
-let scriptureSyncOffset = parseFloat(localStorage.getItem('hope_scripture_sync_offset') || '0.0');
-
 function getIntroOffset(bookName, chapter) {
   let baseOffset = 2.5; // Default for other chapters (short "Chapter X" intro)
   if (parseInt(chapter) === 1) {
@@ -231,15 +229,7 @@ function getIntroOffset(bookName, chapter) {
       baseOffset = 7.5; // Book introduction title (approx 7.5s)
     }
   }
-  return Math.max(0.0, baseOffset + scriptureSyncOffset);
-}
-
-function updateSyncOffsetUI() {
-  const valueEl = document.getElementById('sync-offset-value');
-  if (valueEl) {
-    const formatted = scriptureSyncOffset >= 0 ? `+${scriptureSyncOffset.toFixed(1)}s` : `${scriptureSyncOffset.toFixed(1)}s`;
-    valueEl.textContent = formatted;
-  }
+  return baseOffset;
 }
 
 
@@ -538,11 +528,6 @@ function stopScriptureAudio() {
   const player = document.getElementById('scripture-audio-player');
   if (player) player.classList.add('hidden');
 
-  const syncOverlay = document.getElementById('scripture-sync-overlay');
-  if (syncOverlay) syncOverlay.classList.add('hidden');
-  const syncBtn = document.getElementById('scripture-sync-btn');
-  if (syncBtn) syncBtn.classList.remove('active');
-
   const mainBtn = document.getElementById('btn-play-scripture');
   if (mainBtn) {
     mainBtn.classList.remove('playing');
@@ -635,7 +620,10 @@ function updateActiveVerseHighlight() {
   }
   
   const estimatedCharPos = progress * totalVerseLength;
-  const activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength >= estimatedCharPos);
+  let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
+  if (!activeVerseObj && currentVerseWeights.length > 0) {
+    activeVerseObj = currentVerseWeights[currentVerseWeights.length - 1];
+  }
   
   if (activeVerseObj) {
     highlightVerse(activeVerseObj.verse);
@@ -2944,63 +2932,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scriptureCloseBtn.addEventListener('click', stopScriptureAudio);
   }
 
-  // Scripture Highlight Sync Adjustment Listeners
-  const scriptureSyncBtn = document.getElementById('scripture-sync-btn');
-  const scriptureSyncOverlay = document.getElementById('scripture-sync-overlay');
-  
-  if (scriptureSyncBtn && scriptureSyncOverlay) {
-    scriptureSyncBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isActive = scriptureSyncBtn.classList.toggle('active');
-      if (isActive) {
-        scriptureSyncOverlay.classList.remove('hidden');
-        updateSyncOffsetUI();
-      } else {
-        scriptureSyncOverlay.classList.add('hidden');
-      }
-    });
-    
-    // Prevent closing the overlay when clicking inside it
-    scriptureSyncOverlay.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-    
-    // Also, close the overlay when clicking outside
-    document.addEventListener('click', () => {
-      if (scriptureSyncOverlay) scriptureSyncOverlay.classList.add('hidden');
-      if (scriptureSyncBtn) scriptureSyncBtn.classList.remove('active');
-    });
-  }
-  
-  const syncMinusBtn = document.getElementById('sync-minus-btn');
-  if (syncMinusBtn) {
-    syncMinusBtn.addEventListener('click', () => {
-      scriptureSyncOffset -= 0.5;
-      localStorage.setItem('hope_scripture_sync_offset', scriptureSyncOffset);
-      updateSyncOffsetUI();
-      updateActiveVerseHighlight();
-    });
-  }
-  
-  const syncPlusBtn = document.getElementById('sync-plus-btn');
-  if (syncPlusBtn) {
-    syncPlusBtn.addEventListener('click', () => {
-      scriptureSyncOffset += 0.5;
-      localStorage.setItem('hope_scripture_sync_offset', scriptureSyncOffset);
-      updateSyncOffsetUI();
-      updateActiveVerseHighlight();
-    });
-  }
-  
-  const syncResetBtn = document.getElementById('sync-reset-btn');
-  if (syncResetBtn) {
-    syncResetBtn.addEventListener('click', () => {
-      scriptureSyncOffset = 0.0;
-      localStorage.setItem('hope_scripture_sync_offset', scriptureSyncOffset);
-      updateSyncOffsetUI();
-      updateActiveVerseHighlight();
-    });
-  }
+
 
   const scriptureSeekbar = document.getElementById('scripture-seekbar');
   if (scriptureSeekbar) {
