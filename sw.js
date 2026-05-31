@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v58';
+const CACHE_NAME = 'hope-toledo-bible-cache-v59';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',

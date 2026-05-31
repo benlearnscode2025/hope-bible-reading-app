@@ -733,7 +733,7 @@ function updateActiveVerseHighlight() {
     // Default: Snapped Verse Highlight Mode using pre-computed timings
     if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter]) {
       const timings = verseTimings[bookName][chapter];
-      let activeVerse = 1;
+      let activeVerse = 0;
       for (let i = 0; i < timings.length; i++) {
         if (currentTime >= timings[i]) {
           activeVerse = i + 1;
