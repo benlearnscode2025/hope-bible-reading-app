@@ -951,7 +951,8 @@ async function loadActiveChapter() {
       currentVerseWeights = [];
       let totalLength = 0;
       data.verses.forEach(v => {
-        totalLength += v.text.length;
+        const wordCount = v.text.split(/\s+/).filter(w => w.length > 0).length;
+        totalLength += wordCount;
         currentVerseWeights.push({
           verse: v.verse,
           cumulativeLength: totalLength
