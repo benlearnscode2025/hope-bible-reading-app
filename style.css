@@ -1676,6 +1676,13 @@ input:checked + .slider:before {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 767px) {
+  .expanded-player-card .inner-core {
+    padding-bottom: calc(28px + env(safe-area-inset-bottom, 16px)) !important;
+    gap: 16px;
+  }
+}
+
 .expanded-header {
   display: flex;
   justify-content: space-between;
@@ -2476,6 +2483,10 @@ body.distraction-free .floating-nav {
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
+}
+
+body.distraction-free .persistent-player {
+  bottom: 24px;
 }
 
 body.distraction-free .reader-meta-bar {

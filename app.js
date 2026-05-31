@@ -221,7 +221,34 @@ let scripturePlaybackSpeed = 1.0;
 let isScriptureSeeking = false;
 let currentVerseWeights = [];
 let totalVerseLength = 0;
+
+let audioOffsets = null;
+
+async function loadAudioOffsets() {
+  try {
+    const res = await fetch('audio_offsets.json');
+    if (!res.ok) throw new Error("Failed to load audio offsets");
+    audioOffsets = await res.json();
+  } catch (err) {
+    console.error("Failed to load audio offsets, falling back to heuristic:", err);
+  }
+}
+
+function calculateVerseWeight(text) {
+  if (!text) return 0;
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const wordCount = words.length;
+  const briefPauses = (text.match(/[,;:]/g) || []).length;
+  const sentenceEndings = (text.match(/[.?!]/g) || []).length;
+  // Word = 1.0, brief pause = 0.5, sentence ending = 1.0, verse boundary = 1.2
+  return (wordCount * 1.0) + (briefPauses * 0.5) + (sentenceEndings * 1.0) + 1.2;
+}
+
 function getIntroOffset(bookName, chapter) {
+  if (audioOffsets && audioOffsets[bookName] && audioOffsets[bookName][chapter] !== undefined) {
+    return audioOffsets[bookName][chapter];
+  }
+  
   if (parseInt(chapter) !== 1) {
     return 2.5; // Short intro "Chapter X" for all middle chapters
   }
@@ -760,6 +787,7 @@ function seekToVerse(verseNum) {
       if (state.audioScrollMode !== 'smooth') {
         highlightVerse(verseNum);
       }
+      isScriptureSeeking = false;
     }
   }
 }
@@ -1026,8 +1054,8 @@ async function loadActiveChapter() {
       currentVerseWeights = [];
       let totalLength = 0;
       data.verses.forEach(v => {
-        const wordCount = v.text.split(/\s+/).filter(w => w.length > 0).length;
-        totalLength += wordCount;
+        const weight = calculateVerseWeight(v.text);
+        totalLength += weight;
         currentVerseWeights.push({
           verse: v.verse,
           cumulativeLength: totalLength
@@ -2512,6 +2540,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load State
   loadState();
   loadSermonNotes();
+  loadAudioOffsets();
 
   // Scroll tracking for distraction-free reader mode
   let lastScrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -3063,6 +3092,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       isScriptureSeeking = false;
     });
+
+    const resetSeekingFlag = () => {
+      isScriptureSeeking = false;
+    };
+    scriptureSeekbar.addEventListener('mouseup', resetSeekingFlag);
+    scriptureSeekbar.addEventListener('touchend', resetSeekingFlag);
+    scriptureSeekbar.addEventListener('touchcancel', resetSeekingFlag);
   }
 
   setupPlayerTabs();
