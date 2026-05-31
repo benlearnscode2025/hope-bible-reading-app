@@ -3540,3 +3540,23 @@ body.reader-expanded .screen.active,
   }
 }
 
+.custom-select {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-inset);
+  transition: all 0.25s var(--transition-fast);
+}
+
+.custom-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+

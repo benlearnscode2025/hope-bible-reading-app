@@ -196,7 +196,8 @@ let state = {
   notificationTime: "08:00",
   onboarded: false,
   theme: 'light',
-  isPhysicalMode: false
+  isPhysicalMode: false,
+  audioScrollMode: 'highlight' // 'highlight' (synced snaps) or 'smooth' (smooth scroll)
 };
 
 // Sermon State Variables
@@ -221,15 +222,83 @@ let isScriptureSeeking = false;
 let currentVerseWeights = [];
 let totalVerseLength = 0;
 function getIntroOffset(bookName, chapter) {
-  let baseOffset = 2.5; // Default for other chapters (short "Chapter X" intro)
-  if (parseInt(chapter) === 1) {
-    if (bookName.toLowerCase() === 'genesis') {
-      baseOffset = 24.0; // General intro at beginning of the Bible (approx 24s)
-    } else {
-      baseOffset = 7.5; // Book introduction title (approx 7.5s)
-    }
+  if (parseInt(chapter) !== 1) {
+    return 2.5; // Short intro "Chapter X" for all middle chapters
   }
-  return baseOffset;
+  
+  const name = bookName.toLowerCase();
+  
+  // Genesis 1 has the Bible-level preamble
+  if (name === 'genesis') {
+    return 24.0;
+  }
+  
+  // Pentateuch (except Genesis)
+  if (['exodus', 'leviticus', 'numbers', 'deuteronomy'].includes(name)) {
+    return 7.0;
+  }
+  
+  // Historical / Poetic books
+  if (['joshua', 'judges', 'ruth', 'job', 'psalms', 'song of solomon'].includes(name)) {
+    return 4.5;
+  }
+  if (name === 'proverbs') {
+    return 3.5;
+  }
+  if (name === 'ecclesiastes') {
+    return 5.5;
+  }
+  if (['1 samuel', '2 samuel', '1 kings', '2 kings', '1 chronicles', '2 chronicles', 'ezra', 'nehemiah', 'esther'].includes(name)) {
+    return 7.0; // "The First Book of..."
+  }
+  
+  // Major Prophets
+  if (['isaiah', 'jeremiah', 'ezekiel'].includes(name)) {
+    return 5.5;
+  }
+  if (name === 'lamentations') {
+    return 5.0;
+  }
+  if (name === 'daniel') {
+    return 4.5;
+  }
+  
+  // Minor Prophets
+  if (['hosea', 'joel', 'amos', 'obadiah', 'jonah', 'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai', 'zechariah', 'malachi'].includes(name)) {
+    return 3.5;
+  }
+  
+  // Gospels & Acts
+  if (['matthew', 'mark', 'luke', 'john'].includes(name)) {
+    return 5.5;
+  }
+  if (name === 'acts') {
+    return 5.0;
+  }
+  
+  // Epistles
+  if (['1 corinthians', '2 corinthians', '1 thessalonians', '2 thessalonians', '1 timothy', '2 timothy'].includes(name)) {
+    return 7.5;
+  }
+  if (['romans', 'galatians', 'ephesians', 'philippians', 'colossians', 'titus', 'hebrew', 'hebrews'].includes(name)) {
+    return 6.5;
+  }
+  if (['philemon', '2 john', '3 john', 'jude'].includes(name)) {
+    return 4.5;
+  }
+  if (name === 'james') {
+    return 5.5;
+  }
+  if (['1 peter', '2 peter', '1 john'].includes(name)) {
+    return 6.0;
+  }
+  
+  // Revelation
+  if (name === 'revelation') {
+    return 6.0;
+  }
+  
+  return 7.5; // Safe default for Chapter 1
 }
 
 
@@ -619,14 +688,30 @@ function updateActiveVerseHighlight() {
     progress = currentTime / duration;
   }
   
-  const estimatedCharPos = progress * totalVerseLength;
-  let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
-  if (!activeVerseObj && currentVerseWeights.length > 0) {
-    activeVerseObj = currentVerseWeights[currentVerseWeights.length - 1];
-  }
-  
-  if (activeVerseObj) {
-    highlightVerse(activeVerseObj.verse);
+  if (state.audioScrollMode === 'smooth') {
+    // 1. Clear any active highlights
+    const activeVerses = document.querySelectorAll('.verse.active-reading');
+    activeVerses.forEach(v => v.classList.remove('active-reading'));
+    
+    // 2. Smoothly scroll the scripture card container based on progress
+    const container = document.getElementById('scripture-container');
+    if (container && !isScriptureSeeking) {
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (maxScroll > 0) {
+        container.scrollTop = progress * maxScroll;
+      }
+    }
+  } else {
+    // Default: Snapped Verse Highlight Mode
+    const estimatedCharPos = progress * totalVerseLength;
+    let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
+    if (!activeVerseObj && currentVerseWeights.length > 0) {
+      activeVerseObj = currentVerseWeights[currentVerseWeights.length - 1];
+    }
+    
+    if (activeVerseObj) {
+      highlightVerse(activeVerseObj.verse);
+    }
   }
 }
 
@@ -672,7 +757,9 @@ function seekToVerse(verseNum) {
     if (!isNaN(targetTime) && isFinite(targetTime)) {
       scriptureAudio.currentTime = targetTime;
       updateScriptureProgress();
-      highlightVerse(verseNum);
+      if (state.audioScrollMode !== 'smooth') {
+        highlightVerse(verseNum);
+      }
     }
   }
 }
@@ -1435,6 +1522,11 @@ function updateSettingsForm() {
     reminderGroup.classList.remove('hidden');
   } else {
     reminderGroup.classList.add('hidden');
+  }
+
+  const scrollModeSelect = document.getElementById('select-audio-scroll-mode');
+  if (scrollModeSelect) {
+    scrollModeSelect.value = state.audioScrollMode || 'highlight';
   }
 }
 
@@ -2743,6 +2835,25 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`Reminder time set to ${state.notificationTime}`, "clock");
   });
 
+  const scrollModeSelect = document.getElementById('select-audio-scroll-mode');
+  if (scrollModeSelect) {
+    scrollModeSelect.addEventListener('change', (e) => {
+      state.audioScrollMode = e.target.value;
+      saveState();
+      showToast(`Audio scroller mode set to ${state.audioScrollMode === 'smooth' ? 'Smooth Scroll' : 'Synced Highlights'}`, "gear-six");
+      
+      // Immediately reset or recalculate reader view if active
+      if (currentScreen === 'reader') {
+        if (state.audioScrollMode === 'smooth') {
+          const activeVerses = document.querySelectorAll('.verse.active-reading');
+          activeVerses.forEach(v => v.classList.remove('active-reading'));
+        } else {
+          updateActiveVerseHighlight();
+        }
+      }
+    });
+  }
+
   // RESET DATABASE TRIGGER
   document.getElementById('reset-progress-btn').addEventListener('click', () => {
     if (confirm("Are you absolutely sure you want to delete all reading progress and streaks? This cannot be undone.")) {
@@ -2763,7 +2874,8 @@ document.addEventListener('DOMContentLoaded', () => {
         notificationTime: "08:00",
         onboarded: false,
         theme: 'light',
-        isPhysicalMode: false
+        isPhysicalMode: false,
+        audioScrollMode: 'highlight'
       };
       
       // Update UI theme
