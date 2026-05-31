@@ -215,6 +215,8 @@ let currentScreen = 'reader';
 let scriptureAudio = null;
 let scripturePlaybackSpeed = 1.0;
 let isScriptureSeeking = false;
+let currentVerseWeights = [];
+let totalVerseLength = 0;
 
 
 // Local storage key name
@@ -434,6 +436,7 @@ function playScriptureAudio(bookName, chapter) {
   scriptureAudio.addEventListener('timeupdate', () => {
     if (!isScriptureSeeking) {
       updateScriptureProgress();
+      updateActiveVerseHighlight();
     }
   });
 
@@ -556,6 +559,49 @@ function updateScriptureDuration() {
   if (durationText && scriptureAudio.duration) {
     durationText.textContent = formatAudioTime(scriptureAudio.duration);
   }
+}
+
+function updateActiveVerseHighlight() {
+  if (!scriptureAudio || !scriptureAudio.duration || totalVerseLength === 0) return;
+  
+  const progress = scriptureAudio.currentTime / scriptureAudio.duration;
+  const estimatedCharPos = progress * totalVerseLength;
+  
+  const activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength >= estimatedCharPos);
+  if (activeVerseObj) {
+    highlightVerse(activeVerseObj.verse);
+  }
+}
+
+function highlightVerse(verseNum) {
+  const verses = document.querySelectorAll('.verse');
+  verses.forEach(el => {
+    if (el.id === `verse-${verseNum}`) {
+      if (!el.classList.contains('active-reading')) {
+        el.classList.add('active-reading');
+        // Smooth scroll to active verse
+        if (!isScriptureSeeking) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    } else {
+      el.classList.remove('active-reading');
+    }
+  });
+}
+
+function seekToVerse(verseNum) {
+  if (!scriptureAudio || !scriptureAudio.duration || totalVerseLength === 0) return;
+  
+  const index = currentVerseWeights.findIndex(w => w.verse === verseNum);
+  if (index === -1) return;
+  
+  const startLength = index > 0 ? currentVerseWeights[index - 1].cumulativeLength : 0;
+  const startRatio = startLength / totalVerseLength;
+  
+  scriptureAudio.currentTime = startRatio * scriptureAudio.duration;
+  updateScriptureProgress();
+  highlightVerse(verseNum);
 }
 
 // 6. Scripture Loader (local KJV integration & bible-api.com fallback)
@@ -782,10 +828,20 @@ async function loadActiveChapter() {
     htmlContent += `<div class="bible-text ${state.fontFamily === 'sans' ? 'sans-serif' : ''}" style="font-size: ${state.fontSize}%">`;
     
     if (data.verses && data.verses.length > 0) {
+      currentVerseWeights = [];
+      let totalLength = 0;
       data.verses.forEach(v => {
-        htmlContent += `<span class="verse"><span class="verse-num">${v.verse}</span>${v.text.trim()} </span>`;
+        totalLength += v.text.length;
+        currentVerseWeights.push({
+          verse: v.verse,
+          cumulativeLength: totalLength
+        });
+        htmlContent += `<div class="verse" id="verse-${v.verse}" data-verse="${v.verse}"><span class="verse-num">${v.verse}.</span> <span class="verse-text">${v.text.trim()}</span></div>`;
       });
+      totalVerseLength = totalLength;
     } else {
+      currentVerseWeights = [];
+      totalVerseLength = 0;
       // Fallback in case raw text only
       htmlContent += `<p>${data.text}</p>`;
     }
@@ -2437,6 +2493,20 @@ document.addEventListener('DOMContentLoaded', () => {
         isPinching = false;
         initialTouchDist = 0;
         saveState();
+      }
+    });
+
+    scriptureContainer.addEventListener('click', (e) => {
+      const verseEl = e.target.closest('.verse');
+      if (verseEl && scriptureAudio && !isNaN(scriptureAudio.duration)) {
+        // Check if user is selecting text - if so, don't seek
+        const selection = window.getSelection().toString();
+        if (selection.length > 0) return;
+
+        const verseNum = parseInt(verseEl.getAttribute('data-verse'));
+        if (verseNum) {
+          seekToVerse(verseNum);
+        }
       }
     });
   }

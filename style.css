@@ -611,17 +611,53 @@ body.has-player .app-main {
 }
 
 .verse {
-  display: inline;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  border-radius: var(--radius-inner);
+  border-left: 3px solid transparent;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.verse:hover {
+  background: var(--color-accent-light);
 }
 
 .verse-num {
-  font-size: 0.7em;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
   font-weight: 700;
-  vertical-align: super;
-  margin-right: 4px;
   color: var(--color-accent);
-  opacity: 0.8;
+  min-width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.verse-text {
+  flex-grow: 1;
+  line-height: 1.8;
+}
+
+/* Active reading highlights */
+.verse.active-reading {
+  background: rgba(235, 167, 130, 0.12); /* 12% opacity of brand-buckeye #EBA782 */
+  border-left-color: var(--brand-tawny); /* Tawny orange left border */
+  transform: scale(1.01) translateY(-1px);
+  box-shadow: var(--shadow-diffused);
+}
+
+.verse.active-reading .verse-text {
+  font-weight: 600;
+  color: var(--brand-coal);
+}
+
+.verse.active-reading .verse-num {
+  color: var(--brand-tawny);
+  opacity: 1;
 }
 
 .reader-actions {
@@ -3335,17 +3371,18 @@ body.reader-expanded .screen.active,
 .scripture-audio-player {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: var(--bg-card);
+  gap: 16px;
+  background: var(--bg-glass);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 10px 16px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-radius: var(--radius-pill);
+  padding: 8px 20px;
+  margin: 8px auto 16px auto;
+  max-width: 650px;
+  box-shadow: 0 12px 36px rgba(28, 72, 45, 0.08), var(--shadow-diffused);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .scripture-audio-player.hidden {
@@ -3353,30 +3390,30 @@ body.reader-expanded .screen.active,
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .audio-btn-play {
   background: var(--color-accent);
   color: white;
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1rem;
-  transition: transform 0.2s, background 0.2s;
-  box-shadow: var(--shadow-sm);
+  font-size: 1.1rem;
+  transition: transform 0.25s, background 0.25s;
+  box-shadow: 0 4px 10px rgba(28, 72, 45, 0.2);
   flex-shrink: 0;
 }
 
 .audio-btn-play:hover {
-  background: var(--color-accent-dark);
-  transform: scale(1.05);
+  background: var(--brand-tawny);
+  transform: scale(1.08);
 }
 
 .audio-btn-play i {
@@ -3386,60 +3423,66 @@ body.reader-expanded .screen.active,
 .audio-timeline-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-grow: 1;
 }
 
 .time-text {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  font-family: monospace;
-  width: 36px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  width: 38px;
   text-align: center;
   flex-shrink: 0;
+  letter-spacing: 0.02em;
 }
 
 .scripture-seekbar {
   flex-grow: 1;
-  height: 4px;
+  height: 6px;
   -webkit-appearance: none;
-  background: var(--color-border);
-  border-radius: 2px;
+  background: rgba(28, 72, 45, 0.1);
+  border-radius: var(--radius-pill);
   outline: none;
   cursor: pointer;
+  transition: background 0.3s;
 }
 
 .scripture-seekbar::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--color-accent);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .scripture-seekbar::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  transform: scale(1.25);
+  background: var(--brand-tawny);
 }
 
 .audio-speed-btn {
   background: var(--color-accent-light);
   color: var(--color-accent);
   border: 1px solid var(--color-border);
-  padding: 4px 8px;
-  border-radius: var(--radius-inner);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  font-family: inherit;
+  font-family: var(--font-body);
   flex-shrink: 0;
-  transition: all 0.2s;
+  transition: all 0.25s;
 }
 
 .audio-speed-btn:hover {
-  background: var(--color-accent-glow);
-  transform: translateY(-1px);
+  background: var(--color-accent);
+  color: white;
+  transform: scale(1.05);
 }
 
 .audio-btn-close {
@@ -3452,15 +3495,16 @@ body.reader-expanded .screen.active,
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: color 0.2s;
-  width: 28px;
-  height: 28px;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
 }
 
 .audio-btn-close:hover {
   color: var(--color-danger);
-  background: rgba(220, 53, 69, 0.05);
+  background: rgba(208, 56, 51, 0.08);
+  transform: scale(1.1);
 }
 
 /* Play scripture icon button state */
