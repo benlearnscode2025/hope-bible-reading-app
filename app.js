@@ -2171,6 +2171,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // PINCH-TO-ZOOM GESTURE FOR FONT RESIZING
+  let initialTouchDist = 0;
+  let initialFontSize = 100;
+  let isPinching = false;
+
+  const scriptureContainer = document.getElementById('scripture-container');
+  if (scriptureContainer) {
+    scriptureContainer.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault(); // Stop default browser page zoom
+        isPinching = true;
+        initialTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialFontSize = state.fontSize;
+      }
+    }, { passive: false });
+
+    scriptureContainer.addEventListener('touchmove', (e) => {
+      if (isPinching && e.touches.length === 2) {
+        e.preventDefault(); // Stop default browser page zoom
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        
+        if (initialTouchDist > 0) {
+          const factor = currentDist / initialTouchDist;
+          // Dynamically scale font size between 60% and 220%
+          let newFontSize = Math.round(initialFontSize * factor);
+          newFontSize = Math.max(60, Math.min(220, newFontSize));
+          
+          state.fontSize = newFontSize;
+          const textEl = document.querySelector('.bible-text');
+          if (textEl) {
+            textEl.style.fontSize = `${state.fontSize}%`;
+          }
+        }
+      }
+    }, { passive: false });
+
+    scriptureContainer.addEventListener('touchend', (e) => {
+      if (isPinching && e.touches.length < 2) {
+        isPinching = false;
+        initialTouchDist = 0;
+        saveState();
+      }
+    });
+  }
+
   document.getElementById('btn-font-family').addEventListener('click', () => {
     state.fontFamily = state.fontFamily === 'serif' ? 'sans' : 'serif';
     saveState();
