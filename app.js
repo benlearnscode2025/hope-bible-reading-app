@@ -341,14 +341,86 @@ function showToast(message, icon = 'info') {
   }, 1800);
 }
 
-// 6. Scripture Loader (bible-api.com Integration & Caching)
+// 6. Scripture Loader (local KJV integration & bible-api.com fallback)
 let activeChapterText = "";
 let isChapterReadCompleted = false;
+
+let localBiblePromise = null;
+let localBibleData = null;
+
+async function loadLocalBibleData() {
+  if (localBibleData) return localBibleData;
+  if (!localBiblePromise) {
+    localBiblePromise = fetch('kjv.json')
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load local KJV Bible data");
+        return res.json();
+      })
+      .then(data => {
+        localBibleData = data;
+        return data;
+      })
+      .catch(err => {
+        localBiblePromise = null; // Reset promise so we can retry on next call
+        throw err;
+      });
+  }
+  return localBiblePromise;
+}
 
 async function fetchBibleText(book, chapter, translation) {
   const cacheKey = `${translation}_${book}_${chapter}`.toLowerCase();
   if (scriptureCache[cacheKey]) {
     return scriptureCache[cacheKey];
+  }
+
+  // Load from local KJV JSON file first for instant and 100% offline access
+  if (translation.toLowerCase() === 'kjv') {
+    try {
+      const localData = await loadLocalBibleData();
+      if (localData) {
+        const bookIndex = BIBLE_BOOKS.findIndex(b => b.name.toLowerCase() === book.toLowerCase());
+        if (bookIndex !== -1 && localData[bookIndex]) {
+          const bookData = localData[bookIndex];
+          const chapterIndex = chapter - 1;
+          if (bookData.chapters && bookData.chapters[chapterIndex]) {
+            const verses = bookData.chapters[chapterIndex].map((text, idx) => ({
+              verse: idx + 1,
+              text: text
+            }));
+            const fullText = verses.map(v => v.text).join(' ');
+            const result = {
+              reference: `${book} ${chapter}`,
+              verses: verses,
+              text: fullText,
+              translation_id: "kjv",
+              translation_name: "King James Version",
+              translation_note: "Public Domain"
+            };
+
+            // Save to cache
+            scriptureCache[cacheKey] = result;
+            pruneScriptureCache();
+            try {
+              localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+            } catch (e) {
+              if (e.name === 'QuotaExceededError' || e.code === 22) {
+                scriptureCache = {};
+                scriptureCache[cacheKey] = result;
+                try {
+                  localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+                } catch (innerErr) {
+                  console.error("Failed to save scripture cache even after clearing:", innerErr);
+                }
+              }
+            }
+            return result;
+          }
+        }
+      }
+    } catch (localErr) {
+      console.warn("Failed to load local KJV scripture, falling back to network api...", localErr);
+    }
   }
 
   // Setup standard book name formatting for API

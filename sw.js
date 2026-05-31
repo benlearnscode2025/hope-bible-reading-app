@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v45';
+const CACHE_NAME = 'hope-toledo-bible-cache-v46';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [
   'assets/brand/_-05.svg',
   'assets/brand/__Primary-Coal.jpg',
   'sermons.json',
+  'kjv.json',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js',
   'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js',

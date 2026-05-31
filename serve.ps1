@@ -18,7 +18,7 @@ try {
         $urlPath = $request.Url.LocalPath
         if ($urlPath -eq "/") { $urlPath = "/index.html" }
         
-        $filePath = Join-Path "C:\Users\benim\Documents\antigravity\silly-noether" $urlPath.TrimStart('/')
+        $filePath = Join-Path $PSScriptRoot $urlPath.TrimStart('/')
         
         if (Test-Path $filePath -PathType Leaf) {
             $bytes = [System.IO.File]::ReadAllBytes($filePath)
