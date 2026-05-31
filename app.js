@@ -220,6 +220,27 @@ let scripturePlaybackSpeed = 1.0;
 let isScriptureSeeking = false;
 let currentVerseWeights = [];
 let totalVerseLength = 0;
+let scriptureSyncOffset = parseFloat(localStorage.getItem('hope_scripture_sync_offset') || '0.0');
+
+function getIntroOffset(bookName, chapter) {
+  let baseOffset = 2.5; // Default for other chapters (short "Chapter X" intro)
+  if (parseInt(chapter) === 1) {
+    if (bookName.toLowerCase() === 'genesis') {
+      baseOffset = 24.0; // General intro at beginning of the Bible (approx 24s)
+    } else {
+      baseOffset = 7.5; // Book introduction title (approx 7.5s)
+    }
+  }
+  return Math.max(0.0, baseOffset + scriptureSyncOffset);
+}
+
+function updateSyncOffsetUI() {
+  const valueEl = document.getElementById('sync-offset-value');
+  if (valueEl) {
+    const formatted = scriptureSyncOffset >= 0 ? `+${scriptureSyncOffset.toFixed(1)}s` : `${scriptureSyncOffset.toFixed(1)}s`;
+    valueEl.textContent = formatted;
+  }
+}
 
 
 // Local storage key name
@@ -517,6 +538,11 @@ function stopScriptureAudio() {
   const player = document.getElementById('scripture-audio-player');
   if (player) player.classList.add('hidden');
 
+  const syncOverlay = document.getElementById('scripture-sync-overlay');
+  if (syncOverlay) syncOverlay.classList.add('hidden');
+  const syncBtn = document.getElementById('scripture-sync-btn');
+  if (syncBtn) syncBtn.classList.remove('active');
+
   const mainBtn = document.getElementById('btn-play-scripture');
   if (mainBtn) {
     mainBtn.classList.remove('playing');
@@ -592,8 +618,8 @@ function updateScriptureDuration() {
 function updateActiveVerseHighlight() {
   if (!scriptureAudio || isNaN(scriptureAudio.duration) || totalVerseLength === 0 || currentVerseWeights.length === 0) return;
   
-  // Scourby KJV audio has an introduction of ~3.0s (e.g. "Genesis, Chapter 1") and some silence/outro of ~2.0s
-  const introOffset = 3.0; // seconds
+  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const introOffset = getIntroOffset(bookName, state.currentChapter);
   const outroOffset = 2.0; // seconds
   const duration = scriptureAudio.duration;
   const currentTime = scriptureAudio.currentTime;
@@ -643,7 +669,18 @@ function seekToVerse(verseNum) {
   const startRatio = startLength / totalVerseLength;
   
   if (!isNaN(startRatio) && isFinite(startRatio)) {
-    const targetTime = startRatio * scriptureAudio.duration;
+    const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+    const introOffset = getIntroOffset(bookName, state.currentChapter);
+    const outroOffset = 2.0; // seconds
+    const duration = scriptureAudio.duration;
+    
+    let targetTime = 0;
+    if (duration > (introOffset + outroOffset)) {
+      targetTime = introOffset + startRatio * (duration - introOffset - outroOffset);
+    } else {
+      targetTime = startRatio * duration;
+    }
+    
     if (!isNaN(targetTime) && isFinite(targetTime)) {
       scriptureAudio.currentTime = targetTime;
       updateScriptureProgress();
@@ -2904,6 +2941,64 @@ document.addEventListener('DOMContentLoaded', () => {
   const scriptureCloseBtn = document.getElementById('scripture-close-btn');
   if (scriptureCloseBtn) {
     scriptureCloseBtn.addEventListener('click', stopScriptureAudio);
+  }
+
+  // Scripture Highlight Sync Adjustment Listeners
+  const scriptureSyncBtn = document.getElementById('scripture-sync-btn');
+  const scriptureSyncOverlay = document.getElementById('scripture-sync-overlay');
+  
+  if (scriptureSyncBtn && scriptureSyncOverlay) {
+    scriptureSyncBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isActive = scriptureSyncBtn.classList.toggle('active');
+      if (isActive) {
+        scriptureSyncOverlay.classList.remove('hidden');
+        updateSyncOffsetUI();
+      } else {
+        scriptureSyncOverlay.classList.add('hidden');
+      }
+    });
+    
+    // Prevent closing the overlay when clicking inside it
+    scriptureSyncOverlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+    
+    // Also, close the overlay when clicking outside
+    document.addEventListener('click', () => {
+      if (scriptureSyncOverlay) scriptureSyncOverlay.classList.add('hidden');
+      if (scriptureSyncBtn) scriptureSyncBtn.classList.remove('active');
+    });
+  }
+  
+  const syncMinusBtn = document.getElementById('sync-minus-btn');
+  if (syncMinusBtn) {
+    syncMinusBtn.addEventListener('click', () => {
+      scriptureSyncOffset -= 0.5;
+      localStorage.setItem('hope_scripture_sync_offset', scriptureSyncOffset);
+      updateSyncOffsetUI();
+      updateActiveVerseHighlight();
+    });
+  }
+  
+  const syncPlusBtn = document.getElementById('sync-plus-btn');
+  if (syncPlusBtn) {
+    syncPlusBtn.addEventListener('click', () => {
+      scriptureSyncOffset += 0.5;
+      localStorage.setItem('hope_scripture_sync_offset', scriptureSyncOffset);
+      updateSyncOffsetUI();
+      updateActiveVerseHighlight();
+    });
+  }
+  
+  const syncResetBtn = document.getElementById('sync-reset-btn');
+  if (syncResetBtn) {
+    syncResetBtn.addEventListener('click', () => {
+      scriptureSyncOffset = 0.0;
+      localStorage.setItem('hope_scripture_sync_offset', scriptureSyncOffset);
+      updateSyncOffsetUI();
+      updateActiveVerseHighlight();
+    });
   }
 
   const scriptureSeekbar = document.getElementById('scripture-seekbar');

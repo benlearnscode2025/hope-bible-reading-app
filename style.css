@@ -3364,6 +3364,7 @@ body.reader-expanded .screen.active,
 
 /* Scripture Audio Player Styles */
 .scripture-audio-player {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -3507,5 +3508,110 @@ body.reader-expanded .screen.active,
   color: var(--color-accent) !important;
   background: var(--color-accent-light) !important;
   border-color: var(--color-accent) !important;
+}
+
+.audio-sync-btn {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border: 1px solid var(--color-border);
+  padding: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+
+.audio-sync-btn:hover {
+  background: var(--color-accent);
+  color: white;
+  transform: scale(1.05);
+}
+
+.audio-sync-btn.active {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+/* Scripture Sync Overlay */
+.scripture-sync-overlay {
+  position: absolute;
+  bottom: 64px;
+  right: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(28, 72, 45, 0.12), var(--shadow-diffused);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 100;
+  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.scripture-sync-overlay.hidden {
+  display: none !important;
+}
+
+.sync-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sync-adj-btn {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sync-adj-btn:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+.sync-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 45px;
+  text-align: center;
+}
+
+.sync-reset-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.sync-reset-btn:hover {
+  color: var(--color-accent);
+  background: var(--color-accent-light);
 }
 

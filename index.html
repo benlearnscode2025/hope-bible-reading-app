@@ -133,9 +133,21 @@
             <span id="scripture-duration" class="time-text">0:00</span>
           </div>
           <button id="scripture-speed-btn" class="audio-speed-btn" title="Playback Speed">1.0x</button>
+          <button id="scripture-sync-btn" class="audio-sync-btn" title="Adjust Sync">
+            <i class="ph ph-sliders"></i>
+          </button>
           <button id="scripture-close-btn" class="audio-btn-close" title="Stop & Close">
             <i class="ph ph-x"></i>
           </button>
+          
+          <!-- Scripture Highlighting Sync Adjustment Overlay -->
+          <div id="scripture-sync-overlay" class="scripture-sync-overlay hidden">
+            <span class="sync-label">Sync Sync:</span>
+            <button id="sync-minus-btn" class="sync-adj-btn">-1s</button>
+            <span id="sync-offset-value" class="sync-value">0.0s</span>
+            <button id="sync-plus-btn" class="sync-adj-btn">+1s</button>
+            <button id="sync-reset-btn" class="sync-reset-btn" title="Reset to Default"><i class="ph ph-arrow-counter-clockwise"></i></button>
+          </div>
         </div>
 
         <!-- Double Bezel Scripture Container -->
