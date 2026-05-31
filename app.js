@@ -211,7 +211,10 @@ let activeSpeakerFilter = "All";
 let sermonSearchQuery = "";
 let currentScreen = 'reader';
 
-// Scripture Audio State Variables
+// Scripture Audio Configuration & State Variables
+// Change this to your public Cloud Storage bucket URL when deploying (e.g., "https://storage.googleapis.com/your-bucket/")
+const AUDIO_BASE_URL = "audio/";
+
 let scriptureAudio = null;
 let scripturePlaybackSpeed = 1.0;
 let isScriptureSeeking = false;
@@ -384,7 +387,8 @@ function getAudioFileName(bookName, chapter) {
   else if (bookName === '3 John') cleanName = 'III John';
   
   const chapterStr = String(chapter).padStart(3, '0');
-  return `audio/${prefix} ${cleanName} ${chapterStr}.mp3`;
+  const filename = `${prefix} ${cleanName} ${chapterStr}.mp3`;
+  return AUDIO_BASE_URL.endsWith('/') ? `${AUDIO_BASE_URL}${filename}` : `${AUDIO_BASE_URL}/${filename}`;
 }
 
 function playScriptureAudio(bookName, chapter) {
