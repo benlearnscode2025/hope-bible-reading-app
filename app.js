@@ -2072,8 +2072,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Collapse reader when clicking the close button or expanded card background, and expand it when clicked in collapsed state
   if (scriptureCard) {
     scriptureCard.addEventListener('click', (e) => {
-      // Ignore click on links, buttons, related sermons, or customizer elements
-      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.reader-customizer') || e.target.closest('.related-sermon-card')) {
+      // Ignore click on links, other buttons (except the close button), related sermons, or customizer elements
+      const isCloseBtn = e.target.closest('.fullscreen-close-btn');
+      if ((e.target.closest('button') && !isCloseBtn) || e.target.closest('a') || e.target.closest('.reader-customizer') || e.target.closest('.related-sermon-card')) {
         return;
       }
       
