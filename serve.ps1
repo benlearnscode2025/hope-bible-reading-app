@@ -30,6 +30,7 @@ try {
             elseif ($filePath.EndsWith(".png")) { $response.ContentType = "image/png" }
             elseif ($filePath.EndsWith(".json")) { $response.ContentType = "application/json" }
             elseif ($filePath.EndsWith(".svg")) { $response.ContentType = "image/svg+xml" }
+            elseif ($filePath.EndsWith(".mp3")) { $response.ContentType = "audio/mpeg" }
             
             # Add cache-busting headers for local development
             $response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate")
