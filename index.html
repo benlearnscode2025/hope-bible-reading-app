@@ -118,7 +118,24 @@
               <i class="ph ph-arrows-out"></i>
             </button>
             <button id="btn-physical-bible" class="icon-btn small" title="Toggle Physical Bible Mode"><i class="ph ph-book-open"></i></button>
+            <button id="btn-play-scripture" class="icon-btn small" title="Play Chapter Audio"><i class="ph ph-play"></i></button>
           </div>
+        </div>
+
+        <!-- Inline Scripture Audio Player -->
+        <div id="scripture-audio-player" class="scripture-audio-player hidden">
+          <button id="scripture-play-btn" class="audio-btn-play" title="Play/Pause">
+            <i class="ph-fill ph-play"></i>
+          </button>
+          <div class="audio-timeline-container">
+            <span id="scripture-current-time" class="time-text">0:00</span>
+            <input type="range" id="scripture-seekbar" class="scripture-seekbar" min="0" max="100" value="0">
+            <span id="scripture-duration" class="time-text">0:00</span>
+          </div>
+          <button id="scripture-speed-btn" class="audio-speed-btn" title="Playback Speed">1.0x</button>
+          <button id="scripture-close-btn" class="audio-btn-close" title="Stop & Close">
+            <i class="ph ph-x"></i>
+          </button>
         </div>
 
         <!-- Double Bezel Scripture Container -->

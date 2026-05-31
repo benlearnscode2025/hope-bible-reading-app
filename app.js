@@ -211,6 +211,11 @@ let activeSpeakerFilter = "All";
 let sermonSearchQuery = "";
 let currentScreen = 'reader';
 
+// Scripture Audio State Variables
+let scriptureAudio = null;
+let scripturePlaybackSpeed = 1.0;
+let isScriptureSeeking = false;
+
 
 // Local storage key name
 const STORAGE_KEY = 'hope_toledo_bible_tracker_state';
@@ -272,6 +277,9 @@ const SCREENS = ['onboarding', 'reader', 'quiz', 'sermons', 'stats', 'settings']
 
 function navigateTo(screenId) {
   currentScreen = screenId;
+  if (screenId !== 'reader') {
+    stopScriptureAudio();
+  }
   document.body.classList.remove('distraction-free');
   document.body.classList.remove('reader-expanded');
   const scriptureCard = document.querySelector('.scripture-card');
@@ -339,6 +347,215 @@ function showToast(message, icon = 'info') {
   setTimeout(() => {
     toast.remove();
   }, 1800);
+}
+
+// ==========================================================================
+// SCRIPTURE AUDIO PLAYBACK CONTROLLER
+// ==========================================================================
+
+function getAudioFileName(bookName, chapter) {
+  const index = BIBLE_BOOKS.findIndex(b => b.name.toLowerCase() === bookName.toLowerCase());
+  if (index === -1) return null;
+  
+  const prefix = String(index + 1).padStart(2, '0');
+  let cleanName = bookName;
+  
+  // Custom mapping to match the Alexander Scourby filenames exactly
+  if (bookName === '1 Samuel') cleanName = 'I Samuel';
+  else if (bookName === '2 Samuel') cleanName = 'II Samuel';
+  else if (bookName === '1 Kings') cleanName = 'I Kings';
+  else if (bookName === '2 Kings') cleanName = 'II Kings';
+  else if (bookName === '1 Chronicles') cleanName = 'I Chronicles';
+  else if (bookName === '2 Chronicles') cleanName = 'II Chronicles';
+  else if (bookName === 'Psalms') cleanName = 'Psalm';
+  else if (bookName === 'Song of Solomon') cleanName = 'Solomon';
+  else if (bookName === '1 Corinthians') cleanName = 'I Corinthians';
+  else if (bookName === '2 Corinthians') cleanName = 'II Corinthians';
+  else if (bookName === '1 Thessalonians') cleanName = 'I Thessalonians';
+  else if (bookName === '2 Thessalonians') cleanName = 'II Thessalonians';
+  else if (bookName === '1 Timothy') cleanName = 'I Timothy';
+  else if (bookName === '2 Timothy') cleanName = 'II Timothy';
+  else if (bookName === '1 Peter') cleanName = 'I Peter';
+  else if (bookName === '2 Peter') cleanName = 'II Peter';
+  else if (bookName === '1 John') cleanName = 'I John';
+  else if (bookName === '2 John') cleanName = 'II John';
+  else if (bookName === '3 John') cleanName = 'III John';
+  
+  const chapterStr = String(chapter).padStart(3, '0');
+  return `audio/${prefix} ${cleanName} ${chapterStr}.mp3`;
+}
+
+function playScriptureAudio(bookName, chapter) {
+  // 1. Stop any active sermon playback
+  if (currentAudio) {
+    currentAudio.pause();
+    const sermonPlayer = document.getElementById('persistent-player');
+    if (sermonPlayer) sermonPlayer.classList.add('hidden');
+    document.body.classList.remove('has-player');
+    const playPauseBtn = document.getElementById('player-play-pause-btn');
+    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+    const miniPlayPauseBtn = document.getElementById('mini-play-pause-btn');
+    if (miniPlayPauseBtn) miniPlayPauseBtn.innerHTML = '<i class="ph ph-play"></i>';
+  }
+
+  // 2. Load and play scripture audio
+  const audioFile = getAudioFileName(bookName, chapter);
+  if (!audioFile) {
+    showToast("Invalid book or chapter", "x-circle");
+    return;
+  }
+
+  if (scriptureAudio) {
+    scriptureAudio.pause();
+    scriptureAudio = null;
+  }
+
+  scriptureAudio = new Audio(audioFile);
+  scriptureAudio.playbackRate = scripturePlaybackSpeed;
+
+  const speedBtn = document.getElementById('scripture-speed-btn');
+  if (speedBtn) speedBtn.textContent = `${scripturePlaybackSpeed}x`;
+
+  // Show inline player
+  const player = document.getElementById('scripture-audio-player');
+  if (player) player.classList.remove('hidden');
+
+  const mainBtn = document.getElementById('btn-play-scripture');
+  if (mainBtn) {
+    mainBtn.classList.add('playing');
+    mainBtn.innerHTML = '<i class="ph ph-pause"></i>';
+    mainBtn.setAttribute('title', 'Pause Chapter Audio');
+  }
+
+  const inlinePlayBtn = document.getElementById('scripture-play-btn');
+  if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-pause"></i>';
+
+  // Event Listeners for Audio element
+  scriptureAudio.addEventListener('timeupdate', () => {
+    if (!isScriptureSeeking) {
+      updateScriptureProgress();
+    }
+  });
+
+  scriptureAudio.addEventListener('durationchange', () => {
+    updateScriptureDuration();
+  });
+
+  scriptureAudio.addEventListener('ended', () => {
+    scriptureAudio.currentTime = 0;
+    updateScriptureProgress();
+    if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+    if (mainBtn) {
+      mainBtn.classList.remove('playing');
+      mainBtn.innerHTML = '<i class="ph ph-play"></i>';
+      mainBtn.setAttribute('title', 'Play Chapter Audio');
+    }
+  });
+
+  scriptureAudio.addEventListener('error', (err) => {
+    console.error("Scripture Audio Playback Error:", err);
+    showToast("Audio file not found or failed to load.", "x-circle");
+    stopScriptureAudio();
+  });
+
+  scriptureAudio.play().catch(e => {
+    console.error("Failed to auto-play scripture audio", e);
+  });
+}
+
+function pauseScriptureAudio() {
+  if (!scriptureAudio) return;
+  scriptureAudio.pause();
+
+  const mainBtn = document.getElementById('btn-play-scripture');
+  if (mainBtn) {
+    mainBtn.innerHTML = '<i class="ph ph-play"></i>';
+    mainBtn.setAttribute('title', 'Resume Chapter Audio');
+  }
+
+  const inlinePlayBtn = document.getElementById('scripture-play-btn');
+  if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+}
+
+function stopScriptureAudio() {
+  if (scriptureAudio) {
+    scriptureAudio.pause();
+    scriptureAudio = null;
+  }
+
+  const player = document.getElementById('scripture-audio-player');
+  if (player) player.classList.add('hidden');
+
+  const mainBtn = document.getElementById('btn-play-scripture');
+  if (mainBtn) {
+    mainBtn.classList.remove('playing');
+    mainBtn.innerHTML = '<i class="ph ph-play"></i>';
+    mainBtn.setAttribute('title', 'Play Chapter Audio');
+  }
+}
+
+function toggleScriptureSpeed() {
+  if (!scriptureAudio) return;
+  
+  if (scripturePlaybackSpeed === 1.0) scripturePlaybackSpeed = 1.25;
+  else if (scripturePlaybackSpeed === 1.25) scripturePlaybackSpeed = 1.5;
+  else if (scripturePlaybackSpeed === 1.5) scripturePlaybackSpeed = 2.0;
+  else scripturePlaybackSpeed = 1.0;
+
+  scriptureAudio.playbackRate = scripturePlaybackSpeed;
+  const speedBtn = document.getElementById('scripture-speed-btn');
+  if (speedBtn) speedBtn.textContent = `${scripturePlaybackSpeed}x`;
+}
+
+function toggleScripturePlayPause() {
+  if (scriptureAudio) {
+    if (scriptureAudio.paused) {
+      scriptureAudio.play().catch(e => {
+        console.error("Failed to resume scripture audio:", e);
+        showToast("Failed to play scripture audio", "x-circle");
+      });
+      const mainBtn = document.getElementById('btn-play-scripture');
+      if (mainBtn) {
+        mainBtn.classList.add('playing');
+        mainBtn.innerHTML = '<i class="ph ph-pause"></i>';
+        mainBtn.setAttribute('title', 'Pause Chapter Audio');
+      }
+      const inlinePlayBtn = document.getElementById('scripture-play-btn');
+      if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-pause"></i>';
+    } else {
+      pauseScriptureAudio();
+    }
+  } else {
+    playScriptureAudio(BIBLE_BOOKS[state.currentBookIndex].name, state.currentChapter);
+  }
+}
+
+function formatAudioTime(seconds) {
+  if (isNaN(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateScriptureProgress() {
+  if (!scriptureAudio) return;
+  const seekbar = document.getElementById('scripture-seekbar');
+  const currentTimeText = document.getElementById('scripture-current-time');
+  
+  if (seekbar && scriptureAudio.duration) {
+    seekbar.value = (scriptureAudio.currentTime / scriptureAudio.duration) * 100;
+  }
+  if (currentTimeText) {
+    currentTimeText.textContent = formatAudioTime(scriptureAudio.currentTime);
+  }
+}
+
+function updateScriptureDuration() {
+  if (!scriptureAudio) return;
+  const durationText = document.getElementById('scripture-duration');
+  if (durationText && scriptureAudio.duration) {
+    durationText.textContent = formatAudioTime(scriptureAudio.duration);
+  }
 }
 
 // 6. Scripture Loader (local KJV integration & bible-api.com fallback)
@@ -483,6 +700,7 @@ function prefetchNextChapter() {
 }
 
 async function loadActiveChapter() {
+  stopScriptureAudio();
   const container = document.getElementById('scripture-container');
   if (!container) return;
 
@@ -2510,6 +2728,46 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saveNotesBtn) {
     saveNotesBtn.addEventListener('click', () => {
       saveCurrentSermonNotes();
+    });
+  }
+
+  // SCRIPTURE AUDIO LISTENERS
+  const btnPlayScripture = document.getElementById('btn-play-scripture');
+  if (btnPlayScripture) {
+    btnPlayScripture.addEventListener('click', toggleScripturePlayPause);
+  }
+
+  const scripturePlayBtn = document.getElementById('scripture-play-btn');
+  if (scripturePlayBtn) {
+    scripturePlayBtn.addEventListener('click', toggleScripturePlayPause);
+  }
+
+  const scriptureSpeedBtn = document.getElementById('scripture-speed-btn');
+  if (scriptureSpeedBtn) {
+    scriptureSpeedBtn.addEventListener('click', toggleScriptureSpeed);
+  }
+
+  const scriptureCloseBtn = document.getElementById('scripture-close-btn');
+  if (scriptureCloseBtn) {
+    scriptureCloseBtn.addEventListener('click', stopScriptureAudio);
+  }
+
+  const scriptureSeekbar = document.getElementById('scripture-seekbar');
+  if (scriptureSeekbar) {
+    scriptureSeekbar.addEventListener('input', (e) => {
+      isScriptureSeeking = true;
+      if (scriptureAudio && scriptureAudio.duration) {
+        const targetTime = (e.target.value / 100) * scriptureAudio.duration;
+        const currentTimeText = document.getElementById('scripture-current-time');
+        if (currentTimeText) currentTimeText.textContent = formatAudioTime(targetTime);
+      }
+    });
+
+    scriptureSeekbar.addEventListener('change', (e) => {
+      if (scriptureAudio && scriptureAudio.duration) {
+        scriptureAudio.currentTime = (e.target.value / 100) * scriptureAudio.duration;
+      }
+      isScriptureSeeking = false;
     });
   }
 

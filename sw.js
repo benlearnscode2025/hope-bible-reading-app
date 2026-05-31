@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hope-toledo-bible-cache-v48';
+const CACHE_NAME = 'hope-toledo-bible-cache-v49';
 const ASSETS_TO_CACHE = [
   'index.html',
   'style.css',
@@ -49,6 +49,11 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  // Bypass service worker for audio files to prevent Range request issues (e.g. on iOS/Safari)
+  if (url.pathname.includes('/audio/') || url.pathname.endsWith('.mp3')) {
+    return;
+  }
 
   // Bypass service worker caching on localhost for easier local development
   if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
