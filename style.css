@@ -3615,3 +3615,47 @@ body.reader-expanded .screen.active,
   background: var(--color-accent-light);
 }
 
+/* Responsive Mobile Layout for Scripture Audio Player */
+@media (max-width: 500px) {
+  .scripture-audio-player {
+    flex-wrap: wrap;
+    border-radius: 24px;
+    padding: 12px 16px;
+    gap: 12px 8px;
+    justify-content: space-between;
+    margin: 8px 12px 16px 12px;
+  }
+  
+  .audio-timeline-container {
+    width: 100%;
+    order: 1;
+  }
+  
+  .audio-btn-play {
+    order: 2;
+  }
+  
+  .audio-speed-btn {
+    order: 3;
+    margin-left: auto; /* Push settings buttons to the right */
+  }
+  
+  .audio-sync-btn {
+    order: 4;
+  }
+  
+  .audio-btn-close {
+    order: 5;
+  }
+  
+  .scripture-sync-overlay {
+    bottom: 105px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-width: 340px;
+    margin: 0 auto;
+    justify-content: space-between;
+  }
+}
+
