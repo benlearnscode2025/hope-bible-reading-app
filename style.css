@@ -643,20 +643,15 @@ body.has-player .app-main {
 }
 
 /* Active reading highlights */
-.verse.active-reading {
-  background: rgba(235, 167, 130, 0.12); /* 12% opacity of brand-buckeye #EBA782 */
-  border-left-color: var(--brand-tawny); /* Tawny orange left border */
-  transform: scale(1.01) translateY(-1px);
-  box-shadow: var(--shadow-diffused);
-}
-
 .verse.active-reading .verse-text {
-  font-weight: 600;
-  color: var(--brand-coal);
+  font-weight: 700;
+  font-size: 1.04em;
+  color: var(--text-primary);
 }
 
 .verse.active-reading .verse-num {
-  color: var(--brand-tawny);
+  color: var(--color-accent);
+  font-weight: 800;
   opacity: 1;
 }
 

@@ -562,12 +562,27 @@ function updateScriptureDuration() {
 }
 
 function updateActiveVerseHighlight() {
-  if (!scriptureAudio || !scriptureAudio.duration || totalVerseLength === 0) return;
+  if (!scriptureAudio || isNaN(scriptureAudio.duration) || totalVerseLength === 0 || currentVerseWeights.length === 0) return;
   
-  const progress = scriptureAudio.currentTime / scriptureAudio.duration;
+  // Scourby KJV audio has an introduction of ~3.0s (e.g. "Genesis, Chapter 1") and some silence/outro of ~2.0s
+  const introOffset = 3.0; // seconds
+  const outroOffset = 2.0; // seconds
+  const duration = scriptureAudio.duration;
+  const currentTime = scriptureAudio.currentTime;
+  
+  let progress = 0;
+  if (duration > (introOffset + outroOffset)) {
+    if (currentTime > introOffset) {
+      progress = (currentTime - introOffset) / (duration - introOffset - outroOffset);
+      progress = Math.min(1.0, Math.max(0.0, progress));
+    }
+  } else {
+    progress = currentTime / duration;
+  }
+  
   const estimatedCharPos = progress * totalVerseLength;
-  
   const activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength >= estimatedCharPos);
+  
   if (activeVerseObj) {
     highlightVerse(activeVerseObj.verse);
   }
@@ -576,7 +591,7 @@ function updateActiveVerseHighlight() {
 function highlightVerse(verseNum) {
   const verses = document.querySelectorAll('.verse');
   verses.forEach(el => {
-    if (el.id === `verse-${verseNum}`) {
+    if (parseInt(el.getAttribute('data-verse')) === parseInt(verseNum)) {
       if (!el.classList.contains('active-reading')) {
         el.classList.add('active-reading');
         // Smooth scroll to active verse
@@ -591,17 +606,22 @@ function highlightVerse(verseNum) {
 }
 
 function seekToVerse(verseNum) {
-  if (!scriptureAudio || !scriptureAudio.duration || totalVerseLength === 0) return;
+  if (!scriptureAudio || isNaN(scriptureAudio.duration) || totalVerseLength === 0 || currentVerseWeights.length === 0) return;
   
-  const index = currentVerseWeights.findIndex(w => w.verse === verseNum);
+  const index = currentVerseWeights.findIndex(w => parseInt(w.verse) === parseInt(verseNum));
   if (index === -1) return;
   
   const startLength = index > 0 ? currentVerseWeights[index - 1].cumulativeLength : 0;
   const startRatio = startLength / totalVerseLength;
   
-  scriptureAudio.currentTime = startRatio * scriptureAudio.duration;
-  updateScriptureProgress();
-  highlightVerse(verseNum);
+  if (!isNaN(startRatio) && isFinite(startRatio)) {
+    const targetTime = startRatio * scriptureAudio.duration;
+    if (!isNaN(targetTime) && isFinite(targetTime)) {
+      scriptureAudio.currentTime = targetTime;
+      updateScriptureProgress();
+      highlightVerse(verseNum);
+    }
+  }
 }
 
 // 6. Scripture Loader (local KJV integration & bible-api.com fallback)
@@ -2534,6 +2554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     scriptureContainer.addEventListener('click', (e) => {
       const verseEl = e.target.closest('.verse');
       if (verseEl && scriptureAudio && !isNaN(scriptureAudio.duration)) {
+        e.stopPropagation();
         // Check if user is selecting text - if so, don't seek
         const selection = window.getSelection().toString();
         if (selection.length > 0) return;
