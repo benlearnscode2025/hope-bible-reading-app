@@ -213,7 +213,7 @@ let currentScreen = 'reader';
 
 // Scripture Audio Configuration & State Variables
 // Change this to your public Cloud Storage bucket URL when deploying (e.g., "https://storage.googleapis.com/your-bucket/")
-const AUDIO_BASE_URL = "audio/";
+const AUDIO_BASE_URL = "https://firebasestorage.googleapis.com/v0/b/hope-toledo-bible-tracker.firebasestorage.app/o/audio%2F";
 
 let scriptureAudio = null;
 let scripturePlaybackSpeed = 1.0;
