@@ -222,15 +222,15 @@ let isScriptureSeeking = false;
 let currentVerseWeights = [];
 let totalVerseLength = 0;
 
-let audioOffsets = null;
+let verseTimings = null;
 
-async function loadAudioOffsets() {
+async function loadVerseTimings() {
   try {
-    const res = await fetch('audio_offsets.json');
-    if (!res.ok) throw new Error("Failed to load audio offsets");
-    audioOffsets = await res.json();
+    const res = await fetch('verse_timings.json');
+    if (!res.ok) throw new Error("Failed to load verse timings");
+    verseTimings = await res.json();
   } catch (err) {
-    console.error("Failed to load audio offsets, falling back to heuristic:", err);
+    console.error("Failed to load verse timings, falling back to heuristic:", err);
   }
 }
 
@@ -245,8 +245,8 @@ function calculateVerseWeight(text) {
 }
 
 function getIntroOffset(bookName, chapter) {
-  if (audioOffsets && audioOffsets[bookName] && audioOffsets[bookName][chapter] !== undefined) {
-    return audioOffsets[bookName][chapter];
+  if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter] && verseTimings[bookName][chapter][0] !== undefined) {
+    return verseTimings[bookName][chapter][0];
   }
   
   if (parseInt(chapter) !== 1) {
@@ -697,10 +697,11 @@ function updateScriptureDuration() {
 }
 
 function updateActiveVerseHighlight() {
-  if (!scriptureAudio || isNaN(scriptureAudio.duration) || totalVerseLength === 0 || currentVerseWeights.length === 0) return;
+  if (!scriptureAudio || isNaN(scriptureAudio.duration)) return;
   
   const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
-  const introOffset = getIntroOffset(bookName, state.currentChapter);
+  const chapter = state.currentChapter;
+  const introOffset = getIntroOffset(bookName, chapter);
   const outroOffset = 2.0; // seconds
   const duration = scriptureAudio.duration;
   const currentTime = scriptureAudio.currentTime;
@@ -729,15 +730,30 @@ function updateActiveVerseHighlight() {
       }
     }
   } else {
-    // Default: Snapped Verse Highlight Mode
-    const estimatedCharPos = progress * totalVerseLength;
-    let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
-    if (!activeVerseObj && currentVerseWeights.length > 0) {
-      activeVerseObj = currentVerseWeights[currentVerseWeights.length - 1];
-    }
-    
-    if (activeVerseObj) {
-      highlightVerse(activeVerseObj.verse);
+    // Default: Snapped Verse Highlight Mode using pre-computed timings
+    if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter]) {
+      const timings = verseTimings[bookName][chapter];
+      let activeVerse = 1;
+      for (let i = 0; i < timings.length; i++) {
+        if (currentTime >= timings[i]) {
+          activeVerse = i + 1;
+        } else {
+          break;
+        }
+      }
+      highlightVerse(activeVerse);
+    } else {
+      // Fallback: Heuristic Snapped Verse Highlight Mode
+      if (totalVerseLength === 0 || currentVerseWeights.length === 0) return;
+      const estimatedCharPos = progress * totalVerseLength;
+      let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
+      if (!activeVerseObj && currentVerseWeights.length > 0) {
+        activeVerseObj = currentVerseWeights[currentVerseWeights.length - 1];
+      }
+      
+      if (activeVerseObj) {
+        highlightVerse(activeVerseObj.verse);
+      }
     }
   }
 }
@@ -760,8 +776,27 @@ function highlightVerse(verseNum) {
 }
 
 function seekToVerse(verseNum) {
-  if (!scriptureAudio || isNaN(scriptureAudio.duration) || totalVerseLength === 0 || currentVerseWeights.length === 0) return;
+  if (!scriptureAudio || isNaN(scriptureAudio.duration)) return;
   
+  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const chapter = state.currentChapter;
+  
+  if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter]) {
+    const timings = verseTimings[bookName][chapter];
+    const targetTime = timings[verseNum - 1];
+    if (targetTime !== undefined && !isNaN(targetTime) && isFinite(targetTime)) {
+      scriptureAudio.currentTime = targetTime;
+      updateScriptureProgress();
+      if (state.audioScrollMode !== 'smooth') {
+        highlightVerse(verseNum);
+      }
+      isScriptureSeeking = false;
+      return;
+    }
+  }
+  
+  // Fallback to interpolation-based seeking
+  if (totalVerseLength === 0 || currentVerseWeights.length === 0) return;
   const index = currentVerseWeights.findIndex(w => parseInt(w.verse) === parseInt(verseNum));
   if (index === -1) return;
   
@@ -769,8 +804,7 @@ function seekToVerse(verseNum) {
   const startRatio = startLength / totalVerseLength;
   
   if (!isNaN(startRatio) && isFinite(startRatio)) {
-    const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
-    const introOffset = getIntroOffset(bookName, state.currentChapter);
+    const introOffset = getIntroOffset(bookName, chapter);
     const outroOffset = 2.0; // seconds
     const duration = scriptureAudio.duration;
     
@@ -2540,7 +2574,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load State
   loadState();
   loadSermonNotes();
-  loadAudioOffsets();
+  loadVerseTimings();
 
   // Scroll tracking for distraction-free reader mode
   let lastScrollTop = window.scrollY || document.documentElement.scrollTop;
