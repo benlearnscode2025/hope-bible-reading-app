@@ -631,10 +631,36 @@ async function loadLocalBibleData() {
   return localBiblePromise;
 }
 
+function cleanScriptureText(text) {
+  if (!text) return "";
+  // 1. Remove translation/marginal notes (e.g. {firmament: Heb. expansion} or {moving: or, creeping})
+  let cleaned = text.replace(/\{[^}]+:[^}]+\}/g, "");
+  // 2. Remove braces around translator-inserted words (e.g. {was} becomes was)
+  cleaned = cleaned.replace(/\{([^}]+)\}/g, "$1");
+  // 3. Clean up double spaces
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  return cleaned;
+}
+
 async function fetchBibleText(book, chapter, translation) {
   const cacheKey = `${translation}_${book}_${chapter}`.toLowerCase();
   if (scriptureCache[cacheKey]) {
-    return scriptureCache[cacheKey];
+    const cachedData = scriptureCache[cacheKey];
+    // Check if the cached entries still contain raw braces, if so, clean them on the fly
+    if (cachedData.verses && cachedData.verses.length > 0 && cachedData.verses.some(v => v.text.includes('{') || v.text.includes('}'))) {
+      cachedData.verses = cachedData.verses.map(v => ({
+        verse: v.verse,
+        text: cleanScriptureText(v.text)
+      }));
+      cachedData.text = cachedData.verses.map(v => v.text).join(' ');
+      scriptureCache[cacheKey] = cachedData;
+      try {
+        localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+      } catch (e) {
+        console.warn("Failed to update healed scripture cache entry in localStorage:", e);
+      }
+    }
+    return cachedData;
   }
 
   // Load from local KJV JSON file first for instant and 100% offline access
@@ -649,7 +675,7 @@ async function fetchBibleText(book, chapter, translation) {
           if (bookData.chapters && bookData.chapters[chapterIndex]) {
             const verses = bookData.chapters[chapterIndex].map((text, idx) => ({
               verse: idx + 1,
-              text: text
+              text: cleanScriptureText(text)
             }));
             const fullText = verses.map(v => v.text).join(' ');
             const result = {
@@ -699,6 +725,15 @@ async function fetchBibleText(book, chapter, translation) {
     if (!res.ok) throw new Error("Network response was not ok");
     const data = await res.json();
     
+    // Clean network API data
+    if (data.verses) {
+      data.verses = data.verses.map(v => ({
+        verse: v.verse,
+        text: cleanScriptureText(v.text)
+      }));
+      data.text = data.verses.map(v => v.text).join(' ');
+    }
+
     // Save to cache
     scriptureCache[cacheKey] = data;
     pruneScriptureCache();
