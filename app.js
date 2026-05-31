@@ -388,7 +388,31 @@ function getAudioFileName(bookName, chapter) {
   
   const chapterStr = String(chapter).padStart(3, '0');
   const filename = `${prefix} ${cleanName} ${chapterStr}.mp3`;
-  return AUDIO_BASE_URL.endsWith('/') ? `${AUDIO_BASE_URL}${filename}` : `${AUDIO_BASE_URL}/${filename}`;
+  
+  let base = AUDIO_BASE_URL;
+  if (base.startsWith('http://') || base.startsWith('https://')) {
+    if (!base.endsWith('/') && !base.toLowerCase().endsWith('%2f')) {
+      base += '/';
+    }
+  } else {
+    if (!base.endsWith('/')) {
+      base += '/';
+    }
+  }
+  
+  if (base.startsWith('http://') || base.startsWith('https://')) {
+    const encodedFilename = encodeURIComponent(filename);
+    let url = `${base}${encodedFilename}`;
+    if (base.includes('firebasestorage.googleapis.com')) {
+      const separator = url.includes('?') ? '&' : '?';
+      if (!url.includes('alt=media')) {
+        url += `${separator}alt=media`;
+      }
+    }
+    return url;
+  }
+  
+  return `${base}${filename}`;
 }
 
 function playScriptureAudio(bookName, chapter) {
