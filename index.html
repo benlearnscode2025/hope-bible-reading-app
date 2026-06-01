@@ -55,41 +55,192 @@
       <!-- SCREEN 1: ONBOARDING -->
       <section id="screen-onboarding" class="screen">
         <div class="onboarding-card double-bezel">
-          <div class="inner-core">
-            <span class="special-title">Hope Toledo</span>
-            <h1 class="screen-title">Welcome to your daily scripture journey.</h1>
-            <p class="subtitle">Glorifying Jesus Christ by Multiplying Disciples.</p>
+          <div class="inner-core onboarding-wizard">
+            <div class="onboarding-header">
+              <span class="special-title">Hope Toledo</span>
+              <button id="onboarding-skip-btn" class="onboarding-skip-btn" title="Skip Intro">Skip</button>
+            </div>
             
-            <div class="feature-highlights">
-              <div class="highlight-item">
-                <div class="highlight-icon"><i class="ph ph-book-open"></i></div>
-                <div class="highlight-desc">
-                  <h3>One Chapter Daily</h3>
-                  <p>Read through God's Word at a steady, thoughtful pace without rushing.</p>
+            <div class="onboarding-carousel-container">
+              <div class="onboarding-carousel-track" id="onboarding-carousel-track">
+                
+                <!-- Slide 1: Welcome & Overview -->
+                <div class="onboarding-slide active" data-slide="0">
+                  <h1 class="screen-title">Welcome to your daily scripture journey.</h1>
+                  <p class="subtitle">Glorifying Jesus Christ by Multiplying Disciples.</p>
+                  
+                  <div class="feature-highlights">
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-book-open"></i></div>
+                      <div class="highlight-desc">
+                        <h3>One Chapter Daily</h3>
+                        <p>Read through God's Word at a steady, thoughtful pace without rushing.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-brain"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Reflective Quizzes</h3>
+                        <p>Check your understanding and reflect on the application of each chapter.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-calendar-blank"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Visual Milestones</h3>
+                        <p>Keep track of your reading streak and watch your progress grow day by day.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="highlight-item">
-                <div class="highlight-icon"><i class="ph ph-brain"></i></div>
-                <div class="highlight-desc">
-                  <h3>Reflective Quizzes</h3>
-                  <p>Check your understanding and reflect on the application of each chapter.</p>
+
+                <!-- Slide 2: Interactive Audio Synced Playback -->
+                <div class="onboarding-slide" data-slide="1">
+                  <h1 class="screen-title">Interactive Audio & Sync</h1>
+                  <p class="subtitle">Listen to Alexander Scourby KJV narration.</p>
+                  
+                  <div class="feature-highlights">
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-speaker-high"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Synced Verse Highlights</h3>
+                        <p>Text highlights in sync with the audio playback, powered by Whisper-voice alignments.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-cursor-click"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Tap to Seek Verse</h3>
+                        <p>Tap on any verse to instantly seek and skip the audio to that specific verse.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-gauge"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Adjust Playback Speed</h3>
+                        <p>Speed up or slow down the reading to match your personal pacing.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="highlight-item">
-                <div class="highlight-icon"><i class="ph ph-calendar-blank"></i></div>
-                <div class="highlight-desc">
-                  <h3>Visual Milestones</h3>
-                  <p>Keep track of your reading streak and watch your progress grow day by day.</p>
+
+                <!-- Slide 3: Flexible Study Companion & Modes -->
+                <div class="onboarding-slide" data-slide="2">
+                  <h1 class="screen-title">Custom Reader & Focus</h1>
+                  <p class="subtitle">Tailor the reading experience to your liking.</p>
+                  
+                  <div class="feature-highlights">
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-arrows-out"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Immersive Fullscreen Mode</h3>
+                        <p>Expand the scripture reader to block out all distractions and focus entirely on God's Word.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-text-aa"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Typography & Zoom Controls</h3>
+                        <p>Toggle Serif/Sans-serif fonts, click +/- buttons, or use pinch gestures to resize text.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-book-open"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Physical Bible Mode</h3>
+                        <p>Prefer paper? Toggle Physical Mode to read from your paper copy and use the app only for quizzes.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <!-- Slide 4: Sermons, Guides, & Note-Taking -->
+                <div class="onboarding-slide" data-slide="3">
+                  <h1 class="screen-title">Sermons & Notes</h1>
+                  <p class="subtitle">Grow deeper with messages and outlines.</p>
+                  
+                  <div class="feature-highlights">
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-microphone"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Listen & Search Sermons</h3>
+                        <p>Browse through Hope Baptist Church's audio and video sermon libraries easily.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-list-numbers"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Sermon Outlines & Guides</h3>
+                        <p>Open the study guide tab inside the sermon player to view interactive outlines and reflection questions.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-note-pencil"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Personal Sermon Notes</h3>
+                        <p>Write notes while you listen. Your notes are saved locally and synced automatically to the cloud.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Slide 5: Cloud Sync & Reminders -->
+                <div class="onboarding-slide" data-slide="4">
+                  <h1 class="screen-title">Cloud Sync & Goals</h1>
+                  <p class="subtitle">Keep your history safe and consistent.</p>
+                  
+                  <div class="feature-highlights">
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-cloud-arrow-up"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Cloud Progress Sync</h3>
+                        <p>Log in with Google or email in Settings to sync your reading streak and notes across devices.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-bell"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Daily Reminders</h3>
+                        <p>Enable browser push notifications to remind you at your preferred time to read daily.</p>
+                      </div>
+                    </div>
+                    <div class="highlight-item">
+                      <div class="highlight-icon"><i class="ph ph-gear-six"></i></div>
+                      <div class="highlight-desc">
+                        <h3>Audio Scroller Mode</h3>
+                        <p>In Settings, choose between Synced Verse Highlights and smooth automatic teleprompter scrolling.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
+            <!-- Footer controls for onboarding -->
+            <div class="onboarding-footer">
+              <div class="onboarding-dots" id="onboarding-dots">
+                <span class="dot active" data-index="0"></span>
+                <span class="dot" data-index="1"></span>
+                <span class="dot" data-index="2"></span>
+                <span class="dot" data-index="3"></span>
+                <span class="dot" data-index="4"></span>
+              </div>
+              <div class="onboarding-nav-btns">
+                <button id="onboarding-prev-btn" class="icon-btn small hidden" title="Previous Slide">
+                  <i class="ph ph-arrow-left"></i>
+                </button>
+                <button id="onboarding-next-btn" class="btn-primary island-btn onboarding-action-btn">
+                  <span>Continue</span>
+                  <div class="btn-icon"><i class="ph ph-arrow-right"></i></div>
+                </button>
+                <button id="start-journey-btn" class="btn-primary island-btn onboarding-action-btn hidden">
+                  <span>Begin Journey</span>
+                  <div class="btn-icon"><i class="ph ph-sparkle"></i></div>
+                </button>
+              </div>
+            </div>
 
-
-            <button id="start-journey-btn" class="btn-primary island-btn">
-              <span>Begin Journey</span>
-              <div class="btn-icon"><i class="ph ph-arrow-right"></i></div>
-            </button>
           </div>
         </div>
       </section>
@@ -314,6 +465,17 @@
                 </div>
                 <button id="auth-trigger-btn" class="btn-primary" style="padding: 10px 18px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; font-family: inherit;">
                   <span>Sign In</span>
+                </button>
+              </div>
+
+              <!-- Welcome Tour Replay Section -->
+              <div class="settings-item">
+                <div class="settings-item-desc">
+                  <h3>Welcome Tour</h3>
+                  <p>Review the application features and interactive guide anytime.</p>
+                </div>
+                <button id="show-tutorial-btn" class="btn-primary" style="padding: 10px 18px; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; font-family: inherit;">
+                  <span>Start Tour</span>
                 </button>
               </div>
 

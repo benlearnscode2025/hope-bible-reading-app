@@ -2649,12 +2649,116 @@ function closeVideoPlayer() {
   document.body.classList.remove('reader-expanded');
 }
 
+// Onboarding Carousel Management
+let onboardingSource = 'reader';
+let resetOnboardingCarousel = null;
+
+function initOnboardingCarousel() {
+  let currentSlide = 0;
+  const track = document.getElementById('onboarding-carousel-track');
+  const slides = document.querySelectorAll('.onboarding-slide');
+  const dots = document.querySelectorAll('.onboarding-dots .dot');
+  const prevBtn = document.getElementById('onboarding-prev-btn');
+  const nextBtn = document.getElementById('onboarding-next-btn');
+  const startBtn = document.getElementById('start-journey-btn');
+  const skipBtn = document.getElementById('onboarding-skip-btn');
+
+  if (!track || slides.length === 0) return;
+
+  function updateCarousel() {
+    // Translate the track
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+    // Toggle active class on slides for accessibility/pointer events
+    slides.forEach((slide, idx) => {
+      if (idx === currentSlide) {
+        slide.classList.add('active');
+      } else {
+        slide.classList.remove('active');
+      }
+    });
+
+    // Update dots
+    dots.forEach((dot, idx) => {
+      if (idx === currentSlide) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+
+    // Show/hide navigation buttons
+    if (currentSlide === 0) {
+      prevBtn.classList.add('hidden');
+    } else {
+      prevBtn.classList.remove('hidden');
+    }
+
+    if (currentSlide === slides.length - 1) {
+      nextBtn.classList.add('hidden');
+      startBtn.classList.remove('hidden');
+      if (skipBtn) skipBtn.classList.add('hidden');
+    } else {
+      nextBtn.classList.remove('hidden');
+      startBtn.classList.add('hidden');
+      if (skipBtn) skipBtn.classList.remove('hidden');
+    }
+  }
+
+  // Next button click
+  nextBtn.addEventListener('click', () => {
+    if (currentSlide < slides.length - 1) {
+      currentSlide++;
+      updateCarousel();
+    }
+  });
+
+  // Prev button click
+  prevBtn.addEventListener('click', () => {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateCarousel();
+    }
+  });
+
+  // Skip button click
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      state.translation = 'kjv';
+      state.onboarded = true;
+      saveState();
+      
+      const targetScreen = onboardingSource || 'reader';
+      navigateTo(targetScreen);
+      showToast("Welcome! Enjoy your daily scripture study.", "sparkle");
+    });
+  }
+
+  // Dot navigation click
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentSlide = parseInt(dot.getAttribute('data-index'));
+      updateCarousel();
+    });
+  });
+
+  // Expose reset handler
+  resetOnboardingCarousel = () => {
+    currentSlide = 0;
+    updateCarousel();
+  };
+
+  // Initialize
+  updateCarousel();
+}
+
 // 10. Core Setup & Global Listeners
 document.addEventListener('DOMContentLoaded', () => {
   // Load State
   loadState();
   loadSermonNotes();
   loadVerseTimings();
+  initOnboardingCarousel();
 
   // Scroll tracking for distraction-free reader mode
   let lastScrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -2750,7 +2854,8 @@ document.addEventListener('DOMContentLoaded', () => {
     state.onboarded = true;
     saveState();
     
-    navigateTo('reader');
+    const targetScreen = onboardingSource || 'reader';
+    navigateTo(targetScreen);
     showToast("Welcome! Enjoy your daily scripture study.", "sparkle");
   });
 
@@ -2994,6 +3099,18 @@ document.addEventListener('DOMContentLoaded', () => {
           updateActiveVerseHighlight();
         }
       }
+    });
+  }
+
+  // Welcome Tour Start Trigger
+  const showTutorialBtn = document.getElementById('show-tutorial-btn');
+  if (showTutorialBtn) {
+    showTutorialBtn.addEventListener('click', () => {
+      onboardingSource = 'settings';
+      if (typeof resetOnboardingCarousel === 'function') {
+        resetOnboardingCarousel();
+      }
+      navigateTo('onboarding');
     });
   }
 
