@@ -350,6 +350,18 @@ let scriptureCache = {};
 
 try {
   scriptureCache = JSON.parse(localStorage.getItem(SCRIPTURE_CACHE_KEY) || '{}');
+  // Heal/clean any cached offline/error entries from the scripture cache
+  let cacheChanged = false;
+  Object.keys(scriptureCache).forEach(k => {
+    const val = Reflect.get(scriptureCache, k);
+    if (val && val.error) {
+      Reflect.deleteProperty(scriptureCache, k);
+      cacheChanged = true;
+    }
+  });
+  if (cacheChanged) {
+    localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
+  }
 } catch (e) {
   console.error("Failed to load scripture cache from localStorage:", e);
   scriptureCache = {};
@@ -978,6 +990,12 @@ async function fetchBibleText(book, chapter, translation) {
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error("Network response was not ok");
     const data = await res.json();
+    
+    // Check if network fallback returned a service worker offline error
+    if (data.error) {
+      // Return error but do NOT cache it
+      return data;
+    }
     
     // Clean network API data
     if (data.verses) {
