@@ -268,6 +268,22 @@ def main():
         completed = set()
 
     # Generate full checklist of chapters
+    import sys
+    target_book = None
+    force_all = False
+    
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        if arg == "--force":
+            force_all = True
+            print("Forcing realignment of the entire Bible...")
+        elif arg in BIBLE_BOOKS:
+            target_book = arg
+            print(f"Targeting book for realignment: {target_book}")
+        else:
+            print(f"Unknown argument: {arg}. Use --force or a Bible book name (e.g. Genesis).")
+            return
+
     all_chapters = []
     for b_idx, book in enumerate(BIBLE_BOOKS):
         ch_count = get_book_chapter_count(book)
@@ -280,7 +296,16 @@ def main():
             })
             
     total_chapters = len(all_chapters)
-    chapters_to_run = [c for c in all_chapters if c["key"] not in completed]
+    
+    if target_book:
+        chapters_to_run = [c for c in all_chapters if c["book"] == target_book]
+        completed = {k for k in completed if not k.startswith(target_book + " ")}
+    elif force_all:
+        chapters_to_run = all_chapters
+        completed = set()
+    else:
+        chapters_to_run = [c for c in all_chapters if c["key"] not in completed]
+        
     run_count = len(chapters_to_run)
     
     print(f"Total Bible chapters: {total_chapters}")
