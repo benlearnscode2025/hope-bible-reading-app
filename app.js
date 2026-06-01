@@ -227,6 +227,7 @@ let scripturePlaybackSpeed = 1.0;
 let isScriptureSeeking = false;
 let currentVerseWeights = [];
 let totalVerseLength = 0;
+let scriptureTrackingInterval = null;
 
 let verseTimings = null;
 
@@ -546,6 +547,23 @@ function getAudioFileName(bookName, chapter) {
   return `${base}${filename}`;
 }
 
+function startScriptureTracking() {
+  stopScriptureTracking();
+  scriptureTrackingInterval = setInterval(() => {
+    if (scriptureAudio && !scriptureAudio.paused && !isScriptureSeeking) {
+      updateScriptureProgress();
+      updateActiveVerseHighlight();
+    }
+  }, 40); // Check every 40ms (~25fps) for tight, snappy audio sync
+}
+
+function stopScriptureTracking() {
+  if (scriptureTrackingInterval) {
+    clearInterval(scriptureTrackingInterval);
+    scriptureTrackingInterval = null;
+  }
+}
+
 function playScriptureAudio(bookName, chapter) {
   // 1. Stop any active sermon playback
   if (currentAudio) {
@@ -598,6 +616,11 @@ function playScriptureAudio(bookName, chapter) {
       updateActiveVerseHighlight();
     }
   });
+
+  scriptureAudio.addEventListener('play', startScriptureTracking);
+  scriptureAudio.addEventListener('playing', startScriptureTracking);
+  scriptureAudio.addEventListener('pause', stopScriptureTracking);
+  scriptureAudio.addEventListener('waiting', stopScriptureTracking);
 
   scriptureAudio.addEventListener('durationchange', () => {
     updateScriptureDuration();
