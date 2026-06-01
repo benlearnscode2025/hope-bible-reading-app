@@ -643,9 +643,16 @@ body.has-player .app-main {
 }
 
 /* Active reading highlights */
+.verse.active-reading {
+  background: var(--color-accent-light);
+  border-left: 4px solid var(--color-accent);
+  box-shadow: var(--shadow-diffused);
+  transform: scale(1.02) translateY(-1px);
+}
+
 .verse.active-reading .verse-text {
   font-weight: 700;
-  font-size: 1.04em;
+  font-size: 1.08em;
   color: var(--text-primary);
 }
 
@@ -653,6 +660,11 @@ body.has-player .app-main {
   color: var(--color-accent);
   font-weight: 800;
   opacity: 1;
+}
+
+/* Dim non-active verses when there is an active verse to focus reading attention */
+.bible-text:has(.verse.active-reading) .verse:not(.active-reading) {
+  opacity: 0.45;
 }
 
 .reader-actions {
