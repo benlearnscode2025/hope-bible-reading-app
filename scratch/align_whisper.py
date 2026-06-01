@@ -150,29 +150,58 @@ def align_chapter(model, book_name, chapter_num, verses_text, file_path):
             j -= 1
     matches.reverse()
 
-    # 5. Extract verse start times
-    verse_times = {}
-    for k_pos, t_pos in matches:
-        v_num = kjv_words[k_pos]["verse"]
-        t_start = trans_words[t_pos]["start"]
-        if v_num not in verse_times:
-            verse_times[v_num] = []
-        verse_times[v_num].append(t_start)
+    # 5. Extract verse start times using stable word projection
+    # Find start position of each verse in kjv_words
+    verse_start_idx = {}
+    for idx, w_info in enumerate(kjv_words):
+        v = w_info["verse"]
+        if v not in verse_start_idx:
+            verse_start_idx[v] = idx
 
     num_verses = len(verses_text)
     timings = [0.0] * num_verses
-    
+
+    COMMON_WORDS = {"and", "the", "of", "in", "to", "that", "it", "he", "was", "for", "on", "as", "with", "a", "but", "is", "his", "they", "them", "shall", "unto", "be", "were", "had", "by", "not", "or", "are", "from", "an", "at", "this", "which", "will", "would"}
+
     for v in range(1, num_verses + 1):
-        if v in verse_times and len(verse_times[v]) > 0:
-            times = sorted(verse_times[v])
-            # Filter outliers: if a matched word is spoken more than 20 seconds away
-            # from the median of all matched words for this verse, it is likely an outlier.
-            med = get_median(times)
-            valid_times = [t for t in times if abs(t - med) < 20.0]
-            if len(valid_times) > 0:
-                timings[v-1] = round(float(valid_times[0]), 2)
+        v_matches = []
+        for k_pos, t_pos in matches:
+            w_info = kjv_words[k_pos]
+            if w_info["verse"] == v:
+                idx_in_verse = k_pos - verse_start_idx[v]
+                v_matches.append((idx_in_verse, trans_words[t_pos]["start"], w_info["word"]))
+
+        # Sort matches by index in verse
+        v_matches.sort(key=lambda x: x[0])
+
+        stable_match = None
+        for idx_in_verse, t_start, word in v_matches:
+            if word not in COMMON_WORDS:
+                stable_match = (idx_in_verse, t_start)
+                break
+
+        if not stable_match and len(v_matches) > 0:
+            # Fallback to first matched word
+            stable_match = (v_matches[0][0], v_matches[0][1])
+
+        if stable_match:
+            k_idx, t_start = stable_match
+            # Project start time backwards: each word before k_idx takes ~0.35s
+            t_proj = t_start - (k_idx * 0.35)
+            
+            # Check if there is an actual match before k_idx that is close to t_proj
+            actual_start = None
+            for idx_in_verse, actual_t, word in v_matches:
+                if idx_in_verse < k_idx:
+                    # If this match is within 2.0s of projection, it's valid!
+                    if abs(actual_t - t_proj) < 2.0:
+                        actual_start = actual_t
+                        break
+            
+            if actual_start is not None:
+                timings[v-1] = round(float(actual_start), 2)
             else:
-                timings[v-1] = round(float(times[0]), 2)
+                timings[v-1] = round(float(max(0.0, t_proj)), 2)
         else:
             timings[v-1] = None
             
