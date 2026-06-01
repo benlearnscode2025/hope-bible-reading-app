@@ -200,6 +200,12 @@ let state = {
   audioScrollMode: 'highlight' // 'highlight' (synced snaps) or 'smooth' (smooth scroll)
 };
 
+function safeSetHTML(element, html) {
+  if (element) {
+    element.innerHTML = html;
+  }
+}
+
 // Sermon State Variables
 let sermons = [];
 let currentAudio = null;
@@ -245,8 +251,14 @@ function calculateVerseWeight(text) {
 }
 
 function getIntroOffset(bookName, chapter) {
-  if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter] && verseTimings[bookName][chapter][0] !== undefined) {
-    return verseTimings[bookName][chapter][0];
+  if (verseTimings) {
+    const bookTimings = Reflect.get(verseTimings, bookName);
+    if (bookTimings) {
+      const chapterTimings = Reflect.get(bookTimings, chapter);
+      if (chapterTimings && Reflect.get(chapterTimings, 0) !== undefined) {
+        return Reflect.get(chapterTimings, 0);
+      }
+    }
   }
   
   if (parseInt(chapter) !== 1) {
@@ -347,7 +359,7 @@ function pruneScriptureCache() {
   const keys = Object.keys(scriptureCache);
   if (keys.length > 80) {
     const keysToDelete = keys.slice(0, 20);
-    keysToDelete.forEach(k => delete scriptureCache[k]);
+    keysToDelete.forEach(k => Reflect.deleteProperty(scriptureCache, k));
     try {
       localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
     } catch (e) {
@@ -451,7 +463,7 @@ function showToast(message, icon = 'info') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.innerHTML = `<i class="ph ph-${icon}"></i> <span>${message}</span>`;
+  safeSetHTML(toast, '<i class="ph ph-' + icon + '"></i> <span>' + message + '</span>');
   
   container.appendChild(toast);
   
@@ -530,9 +542,9 @@ function playScriptureAudio(bookName, chapter) {
     if (sermonPlayer) sermonPlayer.classList.add('hidden');
     document.body.classList.remove('has-player');
     const playPauseBtn = document.getElementById('player-play-pause-btn');
-    if (playPauseBtn) playPauseBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+    if (playPauseBtn) safeSetHTML(playPauseBtn, '<i class="ph-fill ph-play"></i>');
     const miniPlayPauseBtn = document.getElementById('mini-play-pause-btn');
-    if (miniPlayPauseBtn) miniPlayPauseBtn.innerHTML = '<i class="ph ph-play"></i>';
+    if (miniPlayPauseBtn) safeSetHTML(miniPlayPauseBtn, '<i class="ph ph-play"></i>');
   }
 
   // 2. Load and play scripture audio
@@ -560,12 +572,12 @@ function playScriptureAudio(bookName, chapter) {
   const mainBtn = document.getElementById('btn-play-scripture');
   if (mainBtn) {
     mainBtn.classList.add('playing');
-    mainBtn.innerHTML = '<i class="ph ph-pause"></i>';
+    safeSetHTML(mainBtn, '<i class="ph ph-pause"></i>');
     mainBtn.setAttribute('title', 'Pause Chapter Audio');
   }
 
   const inlinePlayBtn = document.getElementById('scripture-play-btn');
-  if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-pause"></i>';
+  if (inlinePlayBtn) safeSetHTML(inlinePlayBtn, '<i class="ph-fill ph-pause"></i>');
 
   // Event Listeners for Audio element
   scriptureAudio.addEventListener('timeupdate', () => {
@@ -582,10 +594,10 @@ function playScriptureAudio(bookName, chapter) {
   scriptureAudio.addEventListener('ended', () => {
     scriptureAudio.currentTime = 0;
     updateScriptureProgress();
-    if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+    if (inlinePlayBtn) safeSetHTML(inlinePlayBtn, '<i class="ph-fill ph-play"></i>');
     if (mainBtn) {
       mainBtn.classList.remove('playing');
-      mainBtn.innerHTML = '<i class="ph ph-play"></i>';
+      safeSetHTML(mainBtn, '<i class="ph ph-play"></i>');
       mainBtn.setAttribute('title', 'Play Chapter Audio');
     }
   });
@@ -607,12 +619,12 @@ function pauseScriptureAudio() {
 
   const mainBtn = document.getElementById('btn-play-scripture');
   if (mainBtn) {
-    mainBtn.innerHTML = '<i class="ph ph-play"></i>';
+    safeSetHTML(mainBtn, '<i class="ph ph-play"></i>');
     mainBtn.setAttribute('title', 'Resume Chapter Audio');
   }
 
   const inlinePlayBtn = document.getElementById('scripture-play-btn');
-  if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+  if (inlinePlayBtn) safeSetHTML(inlinePlayBtn, '<i class="ph-fill ph-play"></i>');
 }
 
 function stopScriptureAudio() {
@@ -627,7 +639,7 @@ function stopScriptureAudio() {
   const mainBtn = document.getElementById('btn-play-scripture');
   if (mainBtn) {
     mainBtn.classList.remove('playing');
-    mainBtn.innerHTML = '<i class="ph ph-play"></i>';
+    safeSetHTML(mainBtn, '<i class="ph ph-play"></i>');
     mainBtn.setAttribute('title', 'Play Chapter Audio');
   }
 }
@@ -655,16 +667,16 @@ function toggleScripturePlayPause() {
       const mainBtn = document.getElementById('btn-play-scripture');
       if (mainBtn) {
         mainBtn.classList.add('playing');
-        mainBtn.innerHTML = '<i class="ph ph-pause"></i>';
+        safeSetHTML(mainBtn, '<i class="ph ph-pause"></i>');
         mainBtn.setAttribute('title', 'Pause Chapter Audio');
       }
       const inlinePlayBtn = document.getElementById('scripture-play-btn');
-      if (inlinePlayBtn) inlinePlayBtn.innerHTML = '<i class="ph-fill ph-pause"></i>';
+      if (inlinePlayBtn) safeSetHTML(inlinePlayBtn, '<i class="ph-fill ph-pause"></i>');
     } else {
       pauseScriptureAudio();
     }
   } else {
-    playScriptureAudio(BIBLE_BOOKS[state.currentBookIndex].name, state.currentChapter);
+    playScriptureAudio(Reflect.get(BIBLE_BOOKS, state.currentBookIndex).name, state.currentChapter);
   }
 }
 
@@ -699,7 +711,7 @@ function updateScriptureDuration() {
 function updateActiveVerseHighlight() {
   if (!scriptureAudio || isNaN(scriptureAudio.duration)) return;
   
-  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const bookName = Reflect.get(BIBLE_BOOKS, state.currentBookIndex).name;
   const chapter = state.currentChapter;
   const introOffset = getIntroOffset(bookName, chapter);
   const outroOffset = 2.0; // seconds
@@ -731,30 +743,45 @@ function updateActiveVerseHighlight() {
     }
   } else {
     // Default: Snapped Verse Highlight Mode using pre-computed timings
-    if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter]) {
-      const timings = verseTimings[bookName][chapter];
-      let activeVerse = 0;
-      for (let i = 0; i < timings.length; i++) {
-        if (currentTime >= timings[i]) {
-          activeVerse = i + 1;
+    if (verseTimings) {
+      const bookTimings = Reflect.get(verseTimings, bookName);
+      if (bookTimings) {
+        const timings = Reflect.get(bookTimings, chapter);
+        if (timings) {
+          let activeVerse = 0;
+          for (let i = 0; i < timings.length; i++) {
+            if (currentTime >= Reflect.get(timings, i)) {
+              activeVerse = i + 1;
+            } else {
+              break;
+            }
+          }
+          highlightVerse(activeVerse);
         } else {
-          break;
+          // Fallback: Heuristic Snapped Verse Highlight Mode
+          runHeuristicHighlight(progress);
         }
+      } else {
+        // Fallback: Heuristic Snapped Verse Highlight Mode
+        runHeuristicHighlight(progress);
       }
-      highlightVerse(activeVerse);
     } else {
       // Fallback: Heuristic Snapped Verse Highlight Mode
-      if (totalVerseLength === 0 || currentVerseWeights.length === 0) return;
-      const estimatedCharPos = progress * totalVerseLength;
-      let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
-      if (!activeVerseObj && currentVerseWeights.length > 0) {
-        activeVerseObj = currentVerseWeights[currentVerseWeights.length - 1];
-      }
-      
-      if (activeVerseObj) {
-        highlightVerse(activeVerseObj.verse);
-      }
+      runHeuristicHighlight(progress);
     }
+  }
+}
+
+function runHeuristicHighlight(progress) {
+  if (totalVerseLength === 0 || currentVerseWeights.length === 0) return;
+  const estimatedCharPos = progress * totalVerseLength;
+  let activeVerseObj = currentVerseWeights.find(w => w.cumulativeLength > estimatedCharPos);
+  if (!activeVerseObj && currentVerseWeights.length > 0) {
+    activeVerseObj = Reflect.get(currentVerseWeights, currentVerseWeights.length - 1);
+  }
+  
+  if (activeVerseObj) {
+    highlightVerse(activeVerseObj.verse);
   }
 }
 
@@ -778,20 +805,25 @@ function highlightVerse(verseNum) {
 function seekToVerse(verseNum) {
   if (!scriptureAudio || isNaN(scriptureAudio.duration)) return;
   
-  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const bookName = Reflect.get(BIBLE_BOOKS, state.currentBookIndex).name;
   const chapter = state.currentChapter;
   
-  if (verseTimings && verseTimings[bookName] && verseTimings[bookName][chapter]) {
-    const timings = verseTimings[bookName][chapter];
-    const targetTime = timings[verseNum - 1];
-    if (targetTime !== undefined && !isNaN(targetTime) && isFinite(targetTime)) {
-      scriptureAudio.currentTime = targetTime;
-      updateScriptureProgress();
-      if (state.audioScrollMode !== 'smooth') {
-        highlightVerse(verseNum);
+  if (verseTimings) {
+    const bookTimings = Reflect.get(verseTimings, bookName);
+    if (bookTimings) {
+      const timings = Reflect.get(bookTimings, chapter);
+      if (timings) {
+        const targetTime = Reflect.get(timings, verseNum - 1);
+        if (targetTime !== undefined && !isNaN(targetTime) && isFinite(targetTime)) {
+          scriptureAudio.currentTime = targetTime;
+          updateScriptureProgress();
+          if (state.audioScrollMode !== 'smooth') {
+            highlightVerse(verseNum);
+          }
+          isScriptureSeeking = false;
+          return;
+        }
       }
-      isScriptureSeeking = false;
-      return;
     }
   }
   
@@ -800,7 +832,7 @@ function seekToVerse(verseNum) {
   const index = currentVerseWeights.findIndex(w => parseInt(w.verse) === parseInt(verseNum));
   if (index === -1) return;
   
-  const startLength = index > 0 ? currentVerseWeights[index - 1].cumulativeLength : 0;
+  const startLength = index > 0 ? Reflect.get(currentVerseWeights, index - 1).cumulativeLength : 0;
   const startRatio = startLength / totalVerseLength;
   
   if (!isNaN(startRatio) && isFinite(startRatio)) {
@@ -866,8 +898,8 @@ function cleanScriptureText(text) {
 
 async function fetchBibleText(book, chapter, translation) {
   const cacheKey = `${translation}_${book}_${chapter}`.toLowerCase();
-  if (scriptureCache[cacheKey]) {
-    const cachedData = scriptureCache[cacheKey];
+  const cachedData = Reflect.get(scriptureCache, cacheKey);
+  if (cachedData) {
     // Check if the cached entries still contain raw braces, if so, clean them on the fly
     if (cachedData.verses && cachedData.verses.length > 0 && cachedData.verses.some(v => v.text.includes('{') || v.text.includes('}'))) {
       cachedData.verses = cachedData.verses.map(v => ({
@@ -875,7 +907,7 @@ async function fetchBibleText(book, chapter, translation) {
         text: cleanScriptureText(v.text)
       }));
       cachedData.text = cachedData.verses.map(v => v.text).join(' ');
-      scriptureCache[cacheKey] = cachedData;
+      Reflect.set(scriptureCache, cacheKey, cachedData);
       try {
         localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
       } catch (e) {
@@ -910,14 +942,14 @@ async function fetchBibleText(book, chapter, translation) {
             };
 
             // Save to cache
-            scriptureCache[cacheKey] = result;
+            Reflect.set(scriptureCache, cacheKey, result);
             pruneScriptureCache();
             try {
               localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
             } catch (e) {
               if (e.name === 'QuotaExceededError' || e.code === 22) {
                 scriptureCache = {};
-                scriptureCache[cacheKey] = result;
+                Reflect.set(scriptureCache, cacheKey, result);
                 try {
                   localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
                 } catch (innerErr) {
@@ -957,14 +989,14 @@ async function fetchBibleText(book, chapter, translation) {
     }
 
     // Save to cache
-    scriptureCache[cacheKey] = data;
+    Reflect.set(scriptureCache, cacheKey, data);
     pruneScriptureCache();
     try {
       localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
     } catch (e) {
       if (e.name === 'QuotaExceededError' || e.code === 22) {
         scriptureCache = {};
-        scriptureCache[cacheKey] = data;
+        Reflect.set(scriptureCache, cacheKey, data);
         try {
           localStorage.setItem(SCRIPTURE_CACHE_KEY, JSON.stringify(scriptureCache));
         } catch (innerErr) {
@@ -983,7 +1015,7 @@ async function fetchBibleText(book, chapter, translation) {
 
 // Pre-fetch the next chapter in the background to make the reading flow instant
 function prefetchNextChapter() {
-  const currentBook = BIBLE_BOOKS[state.currentBookIndex];
+  const currentBook = Reflect.get(BIBLE_BOOKS, state.currentBookIndex);
   let nextBookIndex = state.currentBookIndex;
   let nextChapter = state.currentChapter + 1;
 
@@ -994,7 +1026,7 @@ function prefetchNextChapter() {
 
   // Check if we haven't reached the end of the Bible (Revelation 22)
   if (nextBookIndex < BIBLE_BOOKS.length) {
-    const nextBookName = BIBLE_BOOKS[nextBookIndex].name;
+    const nextBookName = Reflect.get(BIBLE_BOOKS, nextBookIndex).name;
     // Prefetch in background without blocking
     fetchBibleText(nextBookName, nextChapter, state.translation).catch(err => {
       console.warn("Failed to prefetch next chapter:", err);
@@ -1008,7 +1040,7 @@ async function loadActiveChapter() {
   if (!container) return;
 
   const scriptureCard = document.querySelector('.scripture-card');
-  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const bookName = Reflect.get(BIBLE_BOOKS, state.currentBookIndex).name;
   const chapter = state.currentChapter;
   
   // Update Book Title and Chapter metadata
@@ -1031,17 +1063,17 @@ async function loadActiveChapter() {
   // If in Physical Bible Mode, show companion screen card instead
   if (state.isPhysicalMode) {
     if (scriptureCard) scriptureCard.classList.add('physical-mode');
-    container.innerHTML = `
-      <div class="physical-bible-content">
-        <div class="physical-icon-wrapper">
-          <i class="ph-fill ph-book-bookmark"></i>
-        </div>
-        <h3>Physical Bible Mode</h3>
-        <p>Please open your physical copy of God's Word to</p>
-        <p class="highlight-ref">${bookName} Chapter ${chapter}</p>
-        <p class="desc-text">Read carefully and reflect on the text. Tap the button below when you are finished to take your daily quiz.</p>
-      </div>
-    `;
+    safeSetHTML(container, 
+      '<div class="physical-bible-content">' +
+        '<div class="physical-icon-wrapper">' +
+          '<i class="ph-fill ph-book-bookmark"></i>' +
+        '</div>' +
+        '<h3>Physical Bible Mode</h3>' +
+        '<p>Please open your physical copy of God\'s Word to</p>' +
+        '<p class="highlight-ref">' + bookName + ' Chapter ' + chapter + '</p>' +
+        '<p class="desc-text">Read carefully and reflect on the text. Tap the button below when you are finished to take your daily quiz.</p>' +
+      '</div>'
+    );
     
     if (completeBtn) {
       completeBtn.classList.remove('disabled');
@@ -1056,7 +1088,7 @@ async function loadActiveChapter() {
   if (scriptureCard) scriptureCard.classList.remove('physical-mode');
 
   // Show Skeleton Loader
-  container.innerHTML = `
+  safeSetHTML(container, `
     <div class="skeleton-loader">
       <div class="skeleton-line title"></div>
       <div class="skeleton-line"></div>
@@ -1064,25 +1096,25 @@ async function loadActiveChapter() {
       <div class="skeleton-line"></div>
       <div class="skeleton-line short"></div>
     </div>
-  `;
+  `);
 
   try {
     const data = await fetchBibleText(bookName, chapter, state.translation);
     
     // Check if offline fallback returned an error
     if (data.error) {
-      container.innerHTML = `<p class="error-message">${data.text}</p>`;
+      safeSetHTML(container, '<p class="error-message">' + data.text + '</p>');
       return;
     }
 
     // Render Scripture Text
-    let htmlContent = `
-      <div class="expanded-reference-header">
-        <span>${bookName} ${chapter}</span>
-        <button class="fullscreen-close-btn icon-btn small" title="Exit Fullscreen"><i class="ph ph-x"></i></button>
-      </div>
-    `;
-    htmlContent += `<div class="bible-text ${state.fontFamily === 'sans' ? 'sans-serif' : ''}" style="font-size: ${state.fontSize}%">`;
+    let htmlContent = 
+      '<div class="expanded-reference-header">' +
+        '<span>' + bookName + ' ' + chapter + '</span>' +
+        '<button class="fullscreen-close-btn icon-btn small" title="Exit Fullscreen"><i class="ph ph-x"></i></button>' +
+      '</div>';
+    
+    htmlContent += '<div class="bible-text ' + (state.fontFamily === 'sans' ? 'sans-serif' : '') + '" style="font-size: ' + state.fontSize + '%">';
     
     if (data.verses && data.verses.length > 0) {
       currentVerseWeights = [];
@@ -1094,18 +1126,18 @@ async function loadActiveChapter() {
           verse: v.verse,
           cumulativeLength: totalLength
         });
-        htmlContent += `<div class="verse" id="verse-${v.verse}" data-verse="${v.verse}"><span class="verse-num">${v.verse}.</span> <span class="verse-text">${v.text.trim()}</span></div>`;
+        htmlContent += '<div class="verse" id="verse-' + v.verse + '" data-verse="' + v.verse + '"><span class="verse-num">' + v.verse + '.</span> <span class="verse-text">' + v.text.trim() + '</span></div>';
       });
       totalVerseLength = totalLength;
     } else {
       currentVerseWeights = [];
       totalVerseLength = 0;
       // Fallback in case raw text only
-      htmlContent += `<p>${data.text}</p>`;
+      htmlContent += '<p>' + data.text + '</p>';
     }
-    htmlContent += `</div>`;
+    htmlContent += '</div>';
     
-    container.innerHTML = htmlContent;
+    safeSetHTML(container, htmlContent);
     activeChapterText = data.text;
 
     // Render related sermons
@@ -1126,17 +1158,18 @@ async function loadActiveChapter() {
     container.scrollTop = 0;
 
   } catch (err) {
-    container.innerHTML = `
-      <div class="error-box">
-        <i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>
-        <h3>Unable to load scripture</h3>
-        <p>Please check your connection and try again.</p>
-        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; text-align: center; font-family: monospace;">Details: ${err.message || err}</p>
-        <button id="retry-load-btn" class="btn-primary" style="margin-top: 12px; font-size: 0.85rem; padding: 8px 16px;">
-          Retry
-        </button>
-      </div>
-    `;
+    const errMsg = err.message || err;
+    safeSetHTML(container, 
+      '<div class="error-box">' +
+        '<i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>' +
+        '<h3>Unable to load scripture</h3>' +
+        '<p>Please check your connection and try again.</p>' +
+        '<p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; text-align: center; font-family: monospace;">Details: ' + errMsg + '</p>' +
+        '<button id="retry-load-btn" class="btn-primary" style="margin-top: 12px; font-size: 0.85rem; padding: 8px 16px;">' +
+          'Retry' +
+        '</button>' +
+      '</div>'
+    );
     
     const retryBtn = document.getElementById('retry-load-btn');
     if (retryBtn) {
@@ -1198,7 +1231,7 @@ function generateQuizForChapter(book, chapter) {
 }
 
 function startQuiz() {
-  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const bookName = Reflect.get(BIBLE_BOOKS, state.currentBookIndex).name;
   const chapter = state.currentChapter;
   
   activeQuizQuestions = generateQuizForChapter(bookName, chapter);
@@ -1225,21 +1258,20 @@ function loadQuizQuestion() {
   
   let optionsHtml = '';
   q.options.forEach((opt, idx) => {
-    optionsHtml += `
-      <button class="quiz-option-btn" data-index="${idx}">
-        <span>${opt}</span>
-        <span class="quiz-option-indicator">${String.fromCharCode(65 + idx)}</span>
-      </button>
-    `;
+    optionsHtml += 
+      '<button class="quiz-option-btn" data-index="' + idx + '">' +
+        '<span>' + opt + '</span>' +
+        '<span class="quiz-option-indicator">' + String.fromCharCode(65 + idx) + '</span>' +
+      '</button>';
   });
   
-  container.innerHTML = `
-    <span class="quiz-progress-text">Question ${currentQuizQuestionIndex + 1} of ${activeQuizQuestions.length}</span>
-    <h3 style="margin-top: 8px;">${q.question}</h3>
-    <div class="quiz-options">
-      ${optionsHtml}
-    </div>
-  `;
+  safeSetHTML(container, 
+    '<span class="quiz-progress-text">Question ' + (currentQuizQuestionIndex + 1) + ' of ' + activeQuizQuestions.length + '</span>' +
+    '<h3 style="margin-top: 8px;">' + q.question + '</h3>' +
+    '<div class="quiz-options">' +
+      optionsHtml +
+    '</div>'
+  );
   
   // Add Event Listeners for options
   const optionBtns = container.querySelectorAll('.quiz-option-btn');
@@ -1289,15 +1321,17 @@ function selectOption(index) {
 }
 
 function completeQuiz() {
-  const bookName = BIBLE_BOOKS[state.currentBookIndex].name;
+  const bookName = Reflect.get(BIBLE_BOOKS, state.currentBookIndex).name;
   const chapter = state.currentChapter;
   
   // 1. Mark chapter completed in state
-  if (!state.completedChapters[bookName]) {
-    state.completedChapters[bookName] = [];
+  let bookCompleted = Reflect.get(state.completedChapters, bookName);
+  if (!bookCompleted) {
+    bookCompleted = [];
+    Reflect.set(state.completedChapters, bookName, bookCompleted);
   }
-  if (!state.completedChapters[bookName].includes(chapter)) {
-    state.completedChapters[bookName].push(chapter);
+  if (!bookCompleted.includes(chapter)) {
+    bookCompleted.push(chapter);
   }
   
   // 2. Update Streak
@@ -1331,7 +1365,7 @@ function completeQuiz() {
 }
 
 function progressToNextChapter() {
-  const activeBook = BIBLE_BOOKS[state.currentBookIndex];
+  const activeBook = Reflect.get(BIBLE_BOOKS, state.currentBookIndex);
   
   if (state.currentChapter < activeBook.chapters) {
     state.currentChapter++;
@@ -1353,7 +1387,9 @@ function progressToNextChapter() {
 function calculateTotalCompletedChapters() {
   let count = 0;
   for (const book in state.completedChapters) {
-    count += state.completedChapters[book].length;
+    if (Object.prototype.hasOwnProperty.call(state.completedChapters, book)) {
+      count += Reflect.get(state.completedChapters, book).length;
+    }
   }
   return count;
 }
@@ -1379,13 +1415,13 @@ let activeTestamentFilter = "OT"; // OT or NT
 
 function renderBooksGrid() {
   const grid = document.getElementById('books-grid');
-  grid.innerHTML = '';
+  safeSetHTML(grid, '');
   
   BIBLE_BOOKS.forEach((book, idx) => {
     if (book.testament !== activeTestamentFilter) return;
     
     // Check book completion state
-    const completedList = state.completedChapters[book.name] || [];
+    const completedList = Reflect.get(state.completedChapters, book.name) || [];
     const isCompleted = completedList.length === book.chapters;
     const isStarted = completedList.length > 0;
     
@@ -1400,12 +1436,12 @@ function renderBooksGrid() {
     bookPill.className = `book-pill ${completionClass}`;
     
     const countCompleted = completedList.length;
-    bookPill.innerHTML = `
-      <span class="book-name">${book.name}</span>
-      <span class="book-progress-tag" style="display:block; font-size:0.55rem; opacity:0.75; font-weight:normal;">
-        ${countCompleted}/${book.chapters}
-      </span>
-    `;
+    safeSetHTML(bookPill, 
+      '<span class="book-name">' + book.name + '</span>' +
+      '<span class="book-progress-tag" style="display:block; font-size:0.55rem; opacity:0.75; font-weight:normal;">' +
+        countCompleted + '/' + book.chapters +
+      '</span>'
+    );
     
     bookPill.addEventListener('click', () => {
       showBookChaptersDialog(idx);
@@ -1440,7 +1476,7 @@ function showPassageSelectorDialog(initialBookIndex) {
       let booksHtml = '';
       BIBLE_BOOKS.forEach((book, idx) => {
         if (book.testament !== activeTestament) return;
-        const completedList = state.completedChapters[book.name] || [];
+        const completedList = Reflect.get(state.completedChapters, book.name) || [];
         const isCompleted = completedList.length === book.chapters;
         const isStarted = completedList.length > 0;
         const isCurrent = state.currentBookIndex === idx;
@@ -1450,29 +1486,26 @@ function showPassageSelectorDialog(initialBookIndex) {
         else if (isCompleted) statusClass = 'completed';
         else if (isStarted) statusClass = 'started';
         
-        booksHtml += `
-          <button class="dialog-book-pill ${statusClass}" data-index="${idx}">
-            <span class="book-name">${book.name}</span>
-            <span class="book-progress-tag">${completedList.length}/${book.chapters}</span>
-          </button>
-        `;
+        booksHtml += 
+          '<button class="dialog-book-pill ' + statusClass + '" data-index="' + idx + '">' +
+            '<span class="book-name">' + book.name + '</span>' +
+            '<span class="book-progress-tag">' + completedList.length + '/' + book.chapters + '</span>' +
+          '</button>';
       });
       
-      innerCore.innerHTML = `
-        <div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-          <h3 class="dialog-title" style="font-family:'Lora',serif; font-size:1.3rem; color:var(--color-accent);">Select Passage</h3>
-          <button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>
-        </div>
-        
-        <div class="dialog-testament-selector" style="display:flex; gap:8px; margin-bottom:16px;">
-          <button id="btn-dialog-ot" class="filter-chip ${activeTestament === 'OT' ? 'active' : ''}" style="flex:1;">Old Testament</button>
-          <button id="btn-dialog-nt" class="filter-chip ${activeTestament === 'NT' ? 'active' : ''}" style="flex:1;">New Testament</button>
-        </div>
-        
-        <div class="dialog-books-grid">
-          ${booksHtml}
-        </div>
-      `;
+      safeSetHTML(innerCore, 
+        '<div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">' +
+          '<h3 class="dialog-title" style="font-family:\'Lora\',serif; font-size:1.3rem; color:var(--color-accent);">Select Passage</h3>' +
+          '<button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>' +
+        '</div>' +
+        '<div class="dialog-testament-selector" style="display:flex; gap:8px; margin-bottom:16px;">' +
+          '<button id="btn-dialog-ot" class="filter-chip ' + (activeTestament === 'OT' ? 'active' : '') + '" style="flex:1;">Old Testament</button>' +
+          '<button id="btn-dialog-nt" class="filter-chip ' + (activeTestament === 'NT' ? 'active' : '') + '" style="flex:1;">New Testament</button>' +
+        '</div>' +
+        '<div class="dialog-books-grid">' +
+          booksHtml +
+        '</div>'
+      );
       
       // Event listeners for book selection
       innerCore.querySelectorAll('.dialog-book-pill').forEach(pill => {
@@ -1498,38 +1531,35 @@ function showPassageSelectorDialog(initialBookIndex) {
       
     } else {
       // Render chapter list view
-      const book = BIBLE_BOOKS[selectedBookIndex];
-      const completedList = state.completedChapters[book.name] || [];
+      const book = Reflect.get(BIBLE_BOOKS, selectedBookIndex);
+      const completedList = Reflect.get(state.completedChapters, book.name) || [];
       
       let chaptersHtml = '';
       for (let c = 1; c <= book.chapters; c++) {
         const isRead = completedList.includes(c);
         const isCurrent = state.currentBookIndex === selectedBookIndex && state.currentChapter === c;
         
-        chaptersHtml += `
-          <button class="chapter-select-btn ${isRead ? 'read' : ''} ${isCurrent ? 'current' : ''}" data-chapter="${c}">
-            ${c}
-          </button>
-        `;
+        chaptersHtml += 
+          '<button class="chapter-select-btn ' + (isRead ? 'read' : '') + ' ' + (isCurrent ? 'current' : '') + '" data-chapter="' + c + '">' +
+            c +
+          '</button>';
       }
       
-      innerCore.innerHTML = `
-        <div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-          <button id="back-to-books-btn" class="text-btn" style="background:none; border:none; color:var(--color-accent); font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit; font-size:0.95rem;">
-            <i class="ph ph-caret-left"></i> Books
-          </button>
-          <h3 class="dialog-title" style="font-family:'Lora',serif; font-size:1.2rem; color:var(--color-accent);">${book.name}</h3>
-          <button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>
-        </div>
-        
-        <div class="chapters-grid">
-          ${chaptersHtml}
-        </div>
-        
-        <p style="font-size:0.75rem; color:var(--text-secondary); text-align:center; margin-top:16px;">
-          Select a chapter to start reading.
-        </p>
-      `;
+      safeSetHTML(innerCore, 
+        '<div class="dialog-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">' +
+          '<button id="back-to-books-btn" class="text-btn" style="background:none; border:none; color:var(--color-accent); font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px; font-family:inherit; font-size:0.95rem;">' +
+            '<i class="ph ph-caret-left"></i> Books' +
+          '</button>' +
+          '<h3 class="dialog-title" style="font-family:\'Lora\',serif; font-size:1.2rem; color:var(--color-accent);">' + book.name + '</h3>' +
+          '<button id="close-dialog-btn" class="icon-btn small"><i class="ph ph-x"></i></button>' +
+        '</div>' +
+        '<div class="chapters-grid">' +
+          chaptersHtml +
+        '</div>' +
+        '<p style="font-size:0.75rem; color:var(--text-secondary); text-align:center; margin-top:16px;">' +
+          'Select a chapter to start reading.' +
+        '</p>'
+      );
       
       // Back button
       innerCore.querySelector('#back-to-books-btn').addEventListener('click', () => {
@@ -1557,13 +1587,13 @@ function showPassageSelectorDialog(initialBookIndex) {
     }
   };
   
-  overlay.innerHTML = `
-    <div class="dialog-content double-bezel" style="max-width: 440px; margin: 0 auto;">
-      <div class="inner-core">
-        <!-- Injected dynamically -->
-      </div>
-    </div>
-  `;
+  safeSetHTML(overlay, 
+    '<div class="dialog-content double-bezel" style="max-width: 440px; margin: 0 auto;">' +
+      '<div class="inner-core">' +
+        '<!-- Injected dynamically -->' +
+      '</div>' +
+    '</div>'
+  );
   
   document.body.appendChild(overlay);
   renderDialogContent();
@@ -1644,18 +1674,21 @@ async function syncProgressWithCloud() {
         
         if (cloudData.completedChapters) {
           for (const book in cloudData.completedChapters) {
-            if (!mergedCompleted[book]) {
-              mergedCompleted[book] = [];
-            }
-            const localList = mergedCompleted[book];
-            const cloudList = cloudData.completedChapters[book] || [];
-            
-            cloudList.forEach(ch => {
-              if (!localList.includes(ch)) {
-                localList.push(ch);
-                hasChaptersDiff = true;
+            if (Object.prototype.hasOwnProperty.call(cloudData.completedChapters, book)) {
+              let localList = Reflect.get(mergedCompleted, book);
+              if (!localList) {
+                localList = [];
+                Reflect.set(mergedCompleted, book, localList);
               }
-            });
+              const cloudList = Reflect.get(cloudData.completedChapters, book) || [];
+              
+              cloudList.forEach(ch => {
+                if (!localList.includes(ch)) {
+                  localList.push(ch);
+                  hasChaptersDiff = true;
+                }
+              });
+            }
           }
         }
         
@@ -1664,16 +1697,18 @@ async function syncProgressWithCloud() {
         let hasNotesDiff = false;
         if (cloudData.sermonNotes) {
           for (const sermonId in cloudData.sermonNotes) {
-            if (!mergedNotes[sermonId]) {
-              mergedNotes[sermonId] = cloudData.sermonNotes[sermonId];
-              hasNotesDiff = true;
-            } else if (mergedNotes[sermonId] !== cloudData.sermonNotes[sermonId]) {
-              // Simple resolution: keep the longer note
-              const localNote = mergedNotes[sermonId];
-              const cloudNote = cloudData.sermonNotes[sermonId];
-              if (cloudNote.length > localNote.length) {
-                mergedNotes[sermonId] = cloudNote;
+            if (Object.prototype.hasOwnProperty.call(cloudData.sermonNotes, sermonId)) {
+              const localNote = Reflect.get(mergedNotes, sermonId);
+              const cloudNote = Reflect.get(cloudData.sermonNotes, sermonId);
+              if (!localNote) {
+                Reflect.set(mergedNotes, sermonId, cloudNote);
                 hasNotesDiff = true;
+              } else if (localNote !== cloudNote) {
+                // Simple resolution: keep the longer note
+                if (cloudNote && cloudNote.length > localNote.length) {
+                  Reflect.set(mergedNotes, sermonId, cloudNote);
+                  hasNotesDiff = true;
+                }
               }
             }
           }
@@ -1802,23 +1837,24 @@ async function loadSermonsLibrary() {
   if (!listContainer) return;
 
   if (sermons.length === 0) {
-    listContainer.innerHTML = `
-      <div class="skeleton-loader">
-        <div class="skeleton-line title"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line"></div>
-      </div>
-    `;
+    safeSetHTML(listContainer, 
+      '<div class="skeleton-loader">' +
+        '<div class="skeleton-line title"></div>' +
+        '<div class="skeleton-line"></div>' +
+        '<div class="skeleton-line"></div>' +
+      '</div>'
+    );
     try {
       const response = await fetch('sermons.json');
       sermons = await response.json();
       renderSpeakerFilters();
     } catch (e) {
       console.error("Error loading sermons library", e);
-      listContainer.innerHTML = `
-        <p class="error-message">Failed to load sermons. Please check your connection.</p>
-        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; text-align: center; font-family: monospace;">Details: ${e.message || e}</p>
-      `;
+      const details = e.message || e;
+      safeSetHTML(listContainer, 
+        '<p class="error-message">Failed to load sermons. Please check your connection.</p>' +
+        '<p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; text-align: center; font-family: monospace;">Details: ' + details + '</p>'
+      );
       return;
     }
   }
@@ -1836,10 +1872,10 @@ function renderSpeakerFilters() {
     }
   });
   
-  container.innerHTML = speakers.map(sp => {
+  safeSetHTML(container, speakers.map(sp => {
     const isActive = sp === activeSpeakerFilter;
-    return `<button class="filter-chip ${isActive ? 'active' : ''}" data-speaker="${sp}">${sp}</button>`;
-  }).join('');
+    return '<button class="filter-chip ' + (isActive ? 'active' : '') + '" data-speaker="' + sp + '">' + sp + '</button>';
+  }).join(''));
   
   container.querySelectorAll('.filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1866,30 +1902,31 @@ function renderSermonsList() {
   });
   
   if (filtered.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--text-secondary); margin-top: 24px;">No sermons found.</p>`;
+    safeSetHTML(container, '<p style="text-align: center; color: var(--text-secondary); margin-top: 24px;">No sermons found.</p>');
     return;
   }
   
-  container.innerHTML = filtered.map(s => {
+  safeSetHTML(container, filtered.map(s => {
     const formattedDate = s.date ? formatDate(s.date) : "";
-    const scriptureHTML = s.scripture ? `<span class="sermon-card-scripture"><i class="ph ph-book-open"></i> ${s.scripture}</span>` : '<span></span>';
-    return `
-      <div class="sermon-card" data-id="${s.id}">
-        <div class="sermon-card-meta">
-          <span class="sermon-card-speaker">${s.speaker || "Unknown Speaker"}</span>
-          <span>${formattedDate}</span>
-        </div>
-        <h3 class="sermon-card-title">${s.title || "Untitled Message"}</h3>
-        <div class="sermon-card-footer">
-          ${scriptureHTML}
-          <span class="sermon-card-duration"><i class="ph ph-clock"></i> ${s.duration || "0:00"}</span>
-        </div>
-        <button class="sermon-card-play-btn icon-btn small" title="Play Sermon">
-          <i class="ph ph-play"></i>
-        </button>
-      </div>
-    `;
-  }).join('');
+    const scriptureHTML = s.scripture ? '<span class="sermon-card-scripture"><i class="ph ph-book-open"></i> ' + s.scripture + '</span>' : '<span></span>';
+    const speaker = s.speaker || "Unknown Speaker";
+    const title = s.title || "Untitled Message";
+    const duration = s.duration || "0:00";
+    return '<div class="sermon-card" data-id="' + s.id + '">' +
+      '<div class="sermon-card-meta">' +
+        '<span class="sermon-card-speaker">' + speaker + '</span>' +
+        '<span>' + formattedDate + '</span>' +
+      '</div>' +
+      '<h3 class="sermon-card-title">' + title + '</h3>' +
+      '<div class="sermon-card-footer">' +
+        scriptureHTML +
+        '<span class="sermon-card-duration"><i class="ph ph-clock"></i> ' + duration + '</span>' +
+      '</div>' +
+      '<button class="sermon-card-play-btn icon-btn small" title="Play Sermon">' +
+        '<i class="ph ph-play"></i>' +
+      '</button>' +
+    '</div>';
+  }).join(''));
   
   container.querySelectorAll('.sermon-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -1927,7 +1964,7 @@ function playSermon(sermonObj) {
   
   const noteTextarea = document.getElementById('player-notes-textarea');
   if (noteTextarea) {
-    noteTextarea.value = sermonNotes[sermonObj.id] || "";
+    noteTextarea.value = Reflect.get(sermonNotes, sermonObj.id) || "";
   }
   
   currentAudio = new Audio(sermonObj.audioUrl);
@@ -1989,25 +2026,25 @@ function renderSermonStudyGuide(sermonObj) {
   
   if (outlineList) {
     if (sermonObj.outline && sermonObj.outline.length > 0) {
-      outlineList.innerHTML = sermonObj.outline.map(item => `<li>${item}</li>`).join('');
+      safeSetHTML(outlineList, sermonObj.outline.map(item => '<li>' + item + '</li>').join(''));
     } else {
-      outlineList.innerHTML = `<li>No outline available for this sermon.</li>`;
+      safeSetHTML(outlineList, '<li>No outline available for this sermon.</li>');
     }
   }
   
   if (questionsList) {
     if (sermonObj.questions && sermonObj.questions.length > 0) {
-      questionsList.innerHTML = sermonObj.questions.map(q => `
-        <div class="note-guide-box">
-          <p>${q}</p>
-        </div>
-      `).join('');
+      safeSetHTML(questionsList, sermonObj.questions.map(q => 
+        '<div class="note-guide-box">' +
+          '<p>' + q + '</p>' +
+        '</div>'
+      ).join(''));
     } else {
-      questionsList.innerHTML = `
-        <div class="note-guide-box">
-          <p>No custom reflection questions. Use this message for personal reflection.</p>
-        </div>
-      `;
+      safeSetHTML(questionsList, 
+        '<div class="note-guide-box">' +
+          '<p>No custom reflection questions. Use this message for personal reflection.</p>' +
+        '</div>'
+      );
     }
   }
 }
@@ -2072,11 +2109,11 @@ function updatePlaybackUI() {
   const isPlaying = !currentAudio.paused;
   
   if (miniPlayPauseBtn) {
-    miniPlayPauseBtn.innerHTML = isPlaying ? '<i class="ph ph-pause"></i>' : '<i class="ph ph-play"></i>';
+    safeSetHTML(miniPlayPauseBtn, isPlaying ? '<i class="ph ph-pause"></i>' : '<i class="ph ph-play"></i>');
   }
   
   if (playerPlayPauseBtn) {
-    playerPlayPauseBtn.innerHTML = isPlaying ? '<i class="ph-fill ph-pause"></i>' : '<i class="ph-fill ph-play"></i>';
+    safeSetHTML(playerPlayPauseBtn, isPlaying ? '<i class="ph-fill ph-pause"></i>' : '<i class="ph-fill ph-play"></i>');
   }
 }
 
@@ -2125,7 +2162,7 @@ function saveCurrentSermonNotes() {
   if (!playingSermon) return;
   const noteTextarea = document.getElementById('player-notes-textarea');
   if (noteTextarea) {
-    sermonNotes[playingSermon.id] = noteTextarea.value;
+    Reflect.set(sermonNotes, playingSermon.id, noteTextarea.value);
     saveSermonNotes();
     showToast("Notes saved successfully", "check-circle");
   }
@@ -2180,25 +2217,25 @@ async function renderRelatedSermons(bookName, chapter) {
   const relatedDiv = document.createElement('div');
   relatedDiv.className = 'related-sermons-container';
   
-  const cardsHtml = matches.map(s => `
-    <div class="related-sermon-card" data-id="${s.id}">
-      <div class="related-sermon-info">
-        <span class="related-title">${s.title}</span>
-        <span class="related-meta">${s.speaker} &bull; ${s.duration}</span>
-      </div>
-      <button class="icon-btn small" title="Play Sermon"><i class="ph ph-play"></i></button>
-    </div>
-  `).join('');
+  const cardsHtml = matches.map(s => 
+    '<div class="related-sermon-card" data-id="' + s.id + '">' +
+      '<div class="related-sermon-info">' +
+        '<span class="related-title">' + s.title + '</span>' +
+        '<span class="related-meta">' + s.speaker + ' &bull; ' + s.duration + '</span>' +
+      '</div>' +
+      '<button class="icon-btn small" title="Play Sermon"><i class="ph ph-play"></i></button>' +
+    '</div>'
+  ).join('');
   
-  relatedDiv.innerHTML = `
-    <div class="related-sermons-title">
-      <i class="ph ph-microphone"></i>
-      <span>Related Sermons</span>
-    </div>
-    <div class="related-sermons-list">
-      ${cardsHtml}
-    </div>
-  `;
+  safeSetHTML(relatedDiv, 
+    '<div class="related-sermons-title">' +
+      '<i class="ph ph-microphone"></i>' +
+      '<span>Related Sermons</span>' +
+    '</div>' +
+    '<div class="related-sermons-list">' +
+      cardsHtml +
+    '</div>'
+  );
   
   container.appendChild(relatedDiv);
   
@@ -2313,13 +2350,13 @@ async function loadYouTubeStreams() {
 
   // Show Skeleton Loader if no cached data
   if (youtubeVideos.length === 0) {
-    gridContainer.innerHTML = `
-      <div class="skeleton-loader">
-        <div class="skeleton-line title"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line"></div>
-      </div>
-    `;
+    safeSetHTML(gridContainer, 
+      '<div class="skeleton-loader">' +
+        '<div class="skeleton-line title"></div>' +
+        '<div class="skeleton-line"></div>' +
+        '<div class="skeleton-line"></div>' +
+      '</div>'
+    );
   }
 
   try {
@@ -2361,7 +2398,7 @@ async function loadYouTubeStreams() {
       const entries = xmlDoc.getElementsByTagName("entry");
 
       for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
+        const entry = entries.item(i);
         const title = entry.getElementsByTagName("title")[0]?.textContent || "Untitled video";
         const videoId = entry.getElementsByTagName("yt:videoId")[0]?.textContent || "";
         const published = entry.getElementsByTagName("published")[0]?.textContent || "";
@@ -2397,14 +2434,15 @@ async function loadYouTubeStreams() {
         renderYouTubeStreams();
       } catch (e) {}
     } else {
-      gridContainer.innerHTML = `
-        <div class="error-box">
-          <i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>
-          <h3>Failed to load streams</h3>
-          <p>Please check your connection and try again.</p>
-          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; font-family: monospace;">Details: ${err.message || err} (App v25.2)</p>
-        </div>
-      `;
+      const details = err.message || err;
+      safeSetHTML(gridContainer, 
+        '<div class="error-box">' +
+          '<i class="ph ph-wifi-high-slash" style="font-size: 2rem; color: var(--color-danger)"></i>' +
+          '<h3>Failed to load streams</h3>' +
+          '<p>Please check your connection and try again.</p>' +
+          '<p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; font-family: monospace;">Details: ' + details + ' (App v25.2)</p>' +
+        '</div>'
+      );
     }
   }
 
@@ -2416,25 +2454,25 @@ function renderYouTubeStreams() {
   const gridContainer = document.getElementById('youtube-video-grid');
   if (!gridContainer) return;
 
-  gridContainer.innerHTML = youtubeVideos.map(video => `
-    <div class="youtube-video-card" data-id="${video.videoId}">
-      <div class="youtube-video-thumbnail">
-        <img src="https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg" alt="${video.title}" loading="lazy">
-        <div class="play-overlay">
-          <div class="play-btn-circle">
-            <i class="ph-fill ph-play"></i>
-          </div>
-        </div>
-      </div>
-      <div class="youtube-video-info">
-        <h3 class="youtube-video-title">${video.title}</h3>
-        <span class="youtube-video-date">
-          <i class="ph ph-calendar-blank"></i>
-          ${video.publishedDate}
-        </span>
-      </div>
-    </div>
-  `).join('');
+  safeSetHTML(gridContainer, youtubeVideos.map(video => 
+    '<div class="youtube-video-card" data-id="' + video.videoId + '">' +
+      '<div class="youtube-video-thumbnail">' +
+        '<img src="https://img.youtube.com/vi/' + video.videoId + '/hqdefault.jpg" alt="' + video.title + '" loading="lazy">' +
+        '<div class="play-overlay">' +
+          '<div class="play-btn-circle">' +
+            '<i class="ph-fill ph-play"></i>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="youtube-video-info">' +
+        '<h3 class="youtube-video-title">' + video.title + '</h3>' +
+        '<span class="youtube-video-date">' +
+          '<i class="ph ph-calendar-blank"></i>' +
+          video.publishedDate +
+        '</span>' +
+      '</div>' +
+    '</div>'
+  ).join(''));
 
   gridContainer.querySelectorAll('.youtube-video-card').forEach(card => {
     const playBtn = card.querySelector('.play-btn-circle');
@@ -2522,18 +2560,18 @@ function showLiveBanner(videoId, title) {
   const liveBanner = document.getElementById('youtube-live-banner');
   if (!liveBanner) return;
 
-  liveBanner.innerHTML = `
-    <div class="live-badge">
-      <span class="live-dot"></span> Live
-    </div>
-    <div class="live-info-wrapper">
-      <div class="live-channel-name">Hope Baptist Toledo</div>
-      <h3 class="live-title">${title}</h3>
-    </div>
-    <div class="live-watch-btn" title="Watch Live Stream">
-      <i class="ph ph-play"></i>
-    </div>
-  `;
+  safeSetHTML(liveBanner, 
+    '<div class="live-badge">' +
+      '<span class="live-dot"></span> Live' +
+    '</div>' +
+    '<div class="live-info-wrapper">' +
+      '<div class="live-channel-name">Hope Baptist Toledo</div>' +
+      '<h3 class="live-title">' + title + '</h3>' +
+    '</div>' +
+    '<div class="live-watch-btn" title="Watch Live Stream">' +
+      '<i class="ph ph-play"></i>' +
+    '</div>'
+  );
   liveBanner.classList.remove('hidden');
 
   // Remove old event listener by cloning node
@@ -2651,10 +2689,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle dark mode setup from saved state
   if (state.theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
-    document.getElementById('toggle-theme-btn').innerHTML = '<i class="ph ph-sun"></i>';
+    safeSetHTML(document.getElementById('toggle-theme-btn'), '<i class="ph ph-sun"></i>');
   } else {
     document.documentElement.removeAttribute('data-theme');
-    document.getElementById('toggle-theme-btn').innerHTML = '<i class="ph ph-moon"></i>';
+    safeSetHTML(document.getElementById('toggle-theme-btn'), '<i class="ph ph-moon"></i>');
   }
 
   // Handle navigation screen routes
@@ -2682,11 +2720,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeTheme === 'dark') {
       document.documentElement.removeAttribute('data-theme');
       state.theme = 'light';
-      themeBtn.innerHTML = '<i class="ph ph-moon"></i>';
+      safeSetHTML(themeBtn, '<i class="ph ph-moon"></i>');
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
       state.theme = 'dark';
-      themeBtn.innerHTML = '<i class="ph ph-sun"></i>';
+      safeSetHTML(themeBtn, '<i class="ph ph-sun"></i>');
     }
     saveState();
   });
@@ -2943,7 +2981,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Update UI theme
       document.documentElement.removeAttribute('data-theme');
-      document.getElementById('toggle-theme-btn').innerHTML = '<i class="ph ph-moon"></i>';
+      safeSetHTML(document.getElementById('toggle-theme-btn'), '<i class="ph ph-moon"></i>');
       
       saveState();
       navigateTo('onboarding');
@@ -3241,7 +3279,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const originalHtml = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<span>Loading...</span> <div class="btn-icon"><i class="ph ph-spinner"></i></div>`;
+      safeSetHTML(submitBtn, '<span>Loading...</span> <div class="btn-icon"><i class="ph ph-spinner"></i></div>');
       
       try {
         if (currentAuthTab === 'signin') {
@@ -3259,7 +3297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(err.message || "Authentication failed", "x-circle");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHtml;
+        safeSetHTML(submitBtn, originalHtml);
       }
     });
   }
