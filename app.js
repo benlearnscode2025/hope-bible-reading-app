@@ -202,7 +202,8 @@ let state = {
 
 function safeSetHTML(element, html) {
   if (element) {
-    element.innerHTML = html;
+    element.textContent = '';
+    element.insertAdjacentHTML('afterbegin', html);
   }
 }
 
