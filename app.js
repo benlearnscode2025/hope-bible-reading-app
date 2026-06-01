@@ -196,8 +196,7 @@ let state = {
   notificationTime: "08:00",
   onboarded: false,
   theme: 'light',
-  isPhysicalMode: false,
-  audioScrollMode: 'highlight' // 'highlight' (synced snaps) or 'smooth' (smooth scroll)
+  isPhysicalMode: false
 };
 
 function safeSetHTML(element, html) {
@@ -764,39 +763,21 @@ function updateActiveVerseHighlight() {
     progress = currentTime / duration;
   }
   
-  if (state.audioScrollMode === 'smooth') {
-    // 1. Clear any active highlights
-    const activeVerses = document.querySelectorAll('.verse.active-reading');
-    activeVerses.forEach(v => v.classList.remove('active-reading'));
-    
-    // 2. Smoothly scroll the scripture card container based on progress
-    const container = document.getElementById('scripture-container');
-    if (container && !isScriptureSeeking) {
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      if (maxScroll > 0) {
-        container.scrollTop = progress * maxScroll;
-      }
-    }
-  } else {
-    // Default: Snapped Verse Highlight Mode using pre-computed timings
-    if (verseTimings) {
-      const bookTimings = Reflect.get(verseTimings, bookName);
-      if (bookTimings) {
-        const timings = Reflect.get(bookTimings, chapter);
-        if (timings) {
-          let activeVerse = 0;
-          for (let i = 0; i < timings.length; i++) {
-            if (currentTime >= Reflect.get(timings, i)) {
-              activeVerse = i + 1;
-            } else {
-              break;
-            }
+  // Default: Snapped Verse Highlight Mode using pre-computed timings
+  if (verseTimings) {
+    const bookTimings = Reflect.get(verseTimings, bookName);
+    if (bookTimings) {
+      const timings = Reflect.get(bookTimings, chapter);
+      if (timings) {
+        let activeVerse = 0;
+        for (let i = 0; i < timings.length; i++) {
+          if (currentTime >= Reflect.get(timings, i)) {
+            activeVerse = i + 1;
+          } else {
+            break;
           }
-          highlightVerse(activeVerse);
-        } else {
-          // Fallback: Heuristic Snapped Verse Highlight Mode
-          runHeuristicHighlight(progress);
         }
+        highlightVerse(activeVerse);
       } else {
         // Fallback: Heuristic Snapped Verse Highlight Mode
         runHeuristicHighlight(progress);
@@ -805,6 +786,9 @@ function updateActiveVerseHighlight() {
       // Fallback: Heuristic Snapped Verse Highlight Mode
       runHeuristicHighlight(progress);
     }
+  } else {
+    // Fallback: Heuristic Snapped Verse Highlight Mode
+    runHeuristicHighlight(progress);
   }
 }
 
@@ -853,9 +837,7 @@ function seekToVerse(verseNum) {
         if (targetTime !== undefined && !isNaN(targetTime) && isFinite(targetTime)) {
           scriptureAudio.currentTime = targetTime;
           updateScriptureProgress();
-          if (state.audioScrollMode !== 'smooth') {
-            highlightVerse(verseNum);
-          }
+          highlightVerse(verseNum);
           isScriptureSeeking = false;
           return;
         }
@@ -886,9 +868,7 @@ function seekToVerse(verseNum) {
     if (!isNaN(targetTime) && isFinite(targetTime)) {
       scriptureAudio.currentTime = targetTime;
       updateScriptureProgress();
-      if (state.audioScrollMode !== 'smooth') {
-        highlightVerse(verseNum);
-      }
+      highlightVerse(verseNum);
       isScriptureSeeking = false;
     }
   }
@@ -1658,10 +1638,7 @@ function updateSettingsForm() {
     reminderGroup.classList.add('hidden');
   }
 
-  const scrollModeSelect = document.getElementById('select-audio-scroll-mode');
-  if (scrollModeSelect) {
-    scrollModeSelect.value = state.audioScrollMode || 'highlight';
-  }
+
 }
 
 // ==========================================================================
@@ -3083,24 +3060,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`Reminder time set to ${state.notificationTime}`, "clock");
   });
 
-  const scrollModeSelect = document.getElementById('select-audio-scroll-mode');
-  if (scrollModeSelect) {
-    scrollModeSelect.addEventListener('change', (e) => {
-      state.audioScrollMode = e.target.value;
-      saveState();
-      showToast(`Audio scroller mode set to ${state.audioScrollMode === 'smooth' ? 'Smooth Scroll' : 'Synced Highlights'}`, "gear-six");
-      
-      // Immediately reset or recalculate reader view if active
-      if (currentScreen === 'reader') {
-        if (state.audioScrollMode === 'smooth') {
-          const activeVerses = document.querySelectorAll('.verse.active-reading');
-          activeVerses.forEach(v => v.classList.remove('active-reading'));
-        } else {
-          updateActiveVerseHighlight();
-        }
-      }
-    });
-  }
+
 
   // Welcome Tour Start Trigger
   const showTutorialBtn = document.getElementById('show-tutorial-btn');
@@ -3134,8 +3094,7 @@ document.addEventListener('DOMContentLoaded', () => {
         notificationTime: "08:00",
         onboarded: false,
         theme: 'light',
-        isPhysicalMode: false,
-        audioScrollMode: 'highlight'
+        isPhysicalMode: false
       };
       
       // Update UI theme
